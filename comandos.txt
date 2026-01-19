@@ -1,0 +1,34 @@
+# Comandos de Ejecución del Proyecto
+
+## Backend (FastAPI)
+Directorio: `backend/`
+
+1. Crear entorno virtual (opcional pero recomendado):
+   python -m venv venv
+   .\.venv\Scripts\activate
+
+2. Instalar dependencias:
+   pip install -r requirements.txt
+
+3. Ejecutar servidor de desarrollo:
+   uvicorn app.main:app --reload
+
+   El servidor estará disponible en: http://localhost:8000
+   Documentación API (Swagger): http://localhost:8000/docs
+
+## Frontend (Angular)
+Directorio: `frontend/`
+
+1. Instalar dependencias:
+   npm install
+
+2. Ejecutar servidor de desarrollo:
+   npm start
+   # O alternativamente:
+   ng serve
+
+   La aplicación estará disponible en: http://localhost:4200
+
+## Credenciales (Desarrollo)
+Usuario: admin
+Contraseña: admin123
