@@ -8,6 +8,9 @@ app = FastAPI(title="AutoSUN - Cosapi OCR API", version="1.0.0")
 origins = [
     "http://localhost:4200",  # Angular default port
     "http://localhost:3000",
+    "http://192.168.0.76",      # Servidor externo (Producción)
+    "http://192.168.0.76:4200", # Servidor externo (Dev)
+    "*"                         # Permitir todos (opcional para evitar problemas en intranet)
 ]
 
 app.add_middleware(

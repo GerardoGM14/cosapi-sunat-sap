@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -23,8 +24,8 @@ export class LoginComponent {
     this.errorMessage = '';
     this.loginSuccess = false;
 
-    // URL del Backend Python (Asegúrate que el puerto coincida con Uvicorn)
-    const apiUrl = 'http://localhost:8000/api/auth/login';
+    // URL del Backend Python (Configurada en environments)
+    const apiUrl = `${environment.apiUrl}/auth/login`;
 
     this.http.post<any>(apiUrl, this.credentials).subscribe({
       next: (response) => {
