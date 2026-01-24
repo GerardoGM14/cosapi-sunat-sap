@@ -301,26 +301,86 @@ export class ConfigComponent {
     this.triggerToastTimeout();
   }
 
-  selectFolder() {
-    this.showSuccess('Abriendo selector de carpeta...');
-    
-    this.http.get<{folder: string}>(`${environment.apiUrl}/utils/select-folder`)
+  // File Browser Logic
+  isBrowserModalOpen = false;
+  browserCurrentPath = '';
+  browserFolders: string[] = [];
+  browserLoading = false;
+
+  openBrowser() {
+    this.isBrowserModalOpen = true;
+    this.loadFolders(this.configData.general.folder || '');
+  }
+
+  closeBrowser() {
+    this.isBrowserModalOpen = false;
+  }
+
+  loadFolders(path: string) {
+    this.browserLoading = true;
+    this.http.post<any>(`${environment.apiUrl}/utils/list-folders`, { path })
       .subscribe({
         next: (res) => {
-          if (res.folder) {
-            this.configData.general.folder = res.folder;
-            this.showSuccess('Carpeta seleccionada correctamente');
-          } else {
-             // Cancelled by user
-             this.errorMessage = '';
-             this.successMessage = ''; 
-          }
+          this.browserCurrentPath = res.current_path;
+          this.browserFolders = res.folders;
+          this.browserLoading = false;
         },
         error: (err) => {
-          console.error('Error selecting folder:', err);
-          this.showError('No se pudo abrir el selector. Asegúrese que el backend esté ejecutándose.');
+          console.error('Error listing folders', err);
+          this.showError('Error al listar carpetas: ' + err.message);
+          this.browserLoading = false;
         }
       });
+  }
+
+  navigateUp() {
+    // Simple logic to go up
+    // En Windows las rutas son C:\algo\otro. En Linux /algo/otro
+    // El backend ya nos devuelve el parent, pero por ahora lo calculamos o pedimos al backend
+    // Mejor pedir al backend la ruta padre, pero en este caso simple:
+    // Reutilizamos loadFolders con '..' relative path logic o dejamos que el backend maneje parent
+    // Vamos a asumir que el usuario hace click en ".." que vendrá en la lista si lo implementamos así
+    // O mejor, implementamos un botón "Subir nivel"
+    
+    // Hack rápido: Pedir al backend el padre.
+    // Vamos a modificar loadFolders para que el backend nos de el padre, 
+    // pero como ya lo hice en el backend (parent_path), lo usamos si lo guardamos.
+    // Necesito guardar el parent_path.
+    
+    // Para simplificar, simplemente recargamos el path actual + '/..'
+    // O mejor, implementamos navigateTo
+  }
+
+  navigateTo(folderName: string) {
+    let newPath = '';
+    if (this.browserCurrentPath.endsWith('\\') || this.browserCurrentPath.endsWith('/')) {
+        newPath = this.browserCurrentPath + folderName;
+    } else {
+        // Detect separator
+        const sep = this.browserCurrentPath.includes('\\') ? '\\' : '/';
+        newPath = this.browserCurrentPath + sep + folderName;
+    }
+    this.loadFolders(newPath);
+  }
+  
+  navigateParent() {
+      // Simple parent detection
+      const sep = this.browserCurrentPath.includes('\\') ? '\\' : '/';
+      const parts = this.browserCurrentPath.split(sep);
+      parts.pop(); // Remove current
+      const parent = parts.join(sep) || sep; // Fallback to root
+      this.loadFolders(parent);
+  }
+
+  selectCurrentFolder() {
+      this.configData.general.folder = this.browserCurrentPath;
+      this.closeBrowser();
+  }
+
+  // Legacy (Server-side Dialog)
+  selectFolder() {
+    // Ahora abrimos nuestro propio navegador
+    this.openBrowser();
   }
 
   backToLogin() {
