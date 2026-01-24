@@ -10,7 +10,7 @@ origins = [
     "http://localhost:3000",
     "http://192.168.0.76",      # Servidor externo (Producción)
     "http://192.168.0.76:4200", # Servidor externo (Dev)
-    "*"                         # Permitir todos (opcional para evitar problemas en intranet)
+    "http://192.168.0.76:80"    # Servidor externo (Puerto 80 explícito)
 ]
 
 app.add_middleware(
