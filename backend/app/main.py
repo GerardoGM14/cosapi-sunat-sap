@@ -4,18 +4,10 @@ from app.api import auth, utils, bot
 
 app = FastAPI(title="AutoSUN - Cosapi OCR API", version="1.0.0")
 
-# Configuración CORS (Permitir que Angular se conecte)
-origins = [
-    "http://localhost:4200",  # Angular default port
-    "http://localhost:3000",
-    "http://192.168.0.76",      # Servidor externo (Producción)
-    "http://192.168.0.76:4200", # Servidor externo (Dev)
-    "http://192.168.0.76:80"    # Servidor externo (Puerto 80 explícito)
-]
-
+# Configuración CORS (Más permisiva para evitar errores en red local)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origin_regex="https?://.*",  # Permite cualquier origen http o https (ideal para redes locales)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
