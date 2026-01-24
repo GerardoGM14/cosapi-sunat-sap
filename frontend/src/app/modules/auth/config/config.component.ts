@@ -260,7 +260,7 @@ export class ConfigComponent {
     console.log('Iniciando proceso...', payload);
     this.showSuccess('Iniciando proceso...');
 
-    this.http.post('http://localhost:8000/api/bot/run', payload)
+    this.http.post(`${environment.apiUrl}/bot/run`, payload)
       .subscribe({
         next: (res: any) => {
           console.log('Bot response:', res);
