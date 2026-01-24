@@ -304,7 +304,7 @@ export class ConfigComponent {
   selectFolder() {
     this.showSuccess('Abriendo selector de carpeta...');
     
-    this.http.get<{folder: string}>('http://localhost:8000/api/utils/select-folder')
+    this.http.get<{folder: string}>(`${environment.apiUrl}/utils/select-folder`)
       .subscribe({
         next: (res) => {
           if (res.folder) {
