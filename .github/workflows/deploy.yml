@@ -1,0 +1,13 @@
+name: Deploy to Ubuntu Server
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Deploy local
+        run: bash /opt/apps/cosapi-sunat-sap/deploy.sh
