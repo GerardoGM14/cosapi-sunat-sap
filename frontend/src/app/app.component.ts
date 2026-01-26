@@ -55,30 +55,32 @@ export class AppComponent implements OnInit {
 
     // Simplificación: Usaremos el endpoint '/' del backend.
     // Si estamos usando la URL completa en environment (prod/dev):
-    const targetUrl = environment.apiUrl.replace(/\/api\/?$/, ''); // Remove trailing /api
+    const targetUrl = environment.apiUrl.replace(/\/api\/?$/, '/'); // Remove trailing /api and add /
 
-    this.http.get(targetUrl).subscribe({
-        next: (res) => {
-            console.log('%c ✅ Backend: Active (Connected)', 'color: green; font-weight: bold;');
-            console.log('   Response:', res);
-            
-            // 3. Check Sunat/Sap Service
-            // El servicio no es un servidor HTTP per se, es un script que el backend ejecuta.
-            // Verificamos si el backend puede "ver" el servicio.
-            // Podríamos añadir un endpoint ligero en backend para chequear existencia de carpetas/archivos del servicio.
-            this.checkServiceStatus();
-        },
-        error: (err) => {
-            console.log('%c ❌ Backend: Inactive or Unreachable', 'color: red; font-weight: bold;');
-            console.error('   Error:', err);
-        }
-    });
+    // El endpoint root '/' puede devolver HTML si es interceptado por un servidor web (nginx) que sirve el frontend
+    // O puede devolver JSON si le pega directo al backend.
+    // El error "Http failure during parsing" indica que recibió HTML (texto) cuando esperaba JSON.
+    // Solución: Especificar responseType: 'text' para evitar error de parsing si devuelve HTML (frontend),
+    // o mejor aun, consultar un endpoint de API que sabemos devuelve JSON.
+    
+    // CAMBIO: Consultar un endpoint seguro de la API (/api/utils/check-service) que ya usamos luego,
+    // o el root de la API '/api/' si el backend lo soporta, o '/api/utils/health' si existiera.
+    // Como checkServiceStatus ya verifica el backend indirectamente, podemos unificarlo o usar el root del backend '/'
+    // sabiendo que puede fallar si devuelve HTML.
+    
+    // Mejor enfoque: Consultar directamente el endpoint de servicio. Si responde, el backend está vivo.
+    // Así evitamos el problema de que '/' sea interceptado por el servidor web y devuelva el index.html del frontend.
+    
+    this.checkServiceStatus(); // Check directo al backend
   }
 
   checkServiceStatus() {
       // Llamamos a un nuevo endpoint que crearemos en utils para verificar integridad del servicio
+      // Este endpoint sirve doble propósito: Verifica Backend vivo y Servicio scripts presentes.
       this.http.get(`${environment.apiUrl}/utils/check-service`).subscribe({
           next: (res: any) => {
+              console.log('%c ✅ Backend: Active (Connected)', 'color: green; font-weight: bold;');
+              
               if (res.status === 'ok') {
                   console.log('%c ✅ Service Core: Active (Ready)', 'color: green; font-weight: bold;');
               } else {
@@ -87,7 +89,8 @@ export class AppComponent implements OnInit {
               console.groupEnd();
           },
           error: (err) => {
-              console.log('%c ❌ Service Core: Not Detected', 'color: red; font-weight: bold;');
+              console.log('%c ❌ Backend: Inactive or Unreachable', 'color: red; font-weight: bold;');
+              console.error('   Error:', err);
               console.groupEnd();
           }
       });
