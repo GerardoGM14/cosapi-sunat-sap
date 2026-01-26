@@ -15,6 +15,7 @@ async def appSap(args: ISap) -> IReturn:
         try:
             async with async_playwright() as p:
                 headless_mode = os.getenv("HEADLESS", "true").lower() == "true"
+                logger.log(f"🌍 Modo Headless (SAP): {headless_mode}", color=Colors.CYAN)
                 browser = await p.chromium.launch(headless=headless_mode)
                 page = await browser.new_page()
 
