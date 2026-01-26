@@ -1,4 +1,5 @@
 import asyncio
+import os
 from playwright.async_api import async_playwright
 from src.schemas.IReturn import IReturn
 from src.logger.colored_logger import ColoredLogger, Colors
@@ -13,7 +14,8 @@ async def appSap(args: ISap) -> IReturn:
     for i in range(intento):
         try:
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=False)
+                headless_mode = os.getenv("HEADLESS", "true").lower() == "true"
+                browser = await p.chromium.launch(headless=headless_mode)
                 page = await browser.new_page()
 
                 await page.set_viewport_size({"width": 1600, "height": 1000})

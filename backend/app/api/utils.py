@@ -5,6 +5,25 @@ import sys
 
 router = APIRouter()
 
+@router.get("/check-service")
+async def check_service():
+    """Verifica si el servicio de Sunat/Sap (scripts) es accesible."""
+    try:
+        # Lógica similar a bot.py para encontrar la carpeta
+        current_dir = os.getcwd()
+        possible_service_dir = os.path.abspath(os.path.join(current_dir, "..", "sunat-sap-service"))
+        if not os.path.exists(possible_service_dir):
+             possible_service_dir = os.path.abspath(os.path.join(current_dir, "sunat-sap-service"))
+        
+        script_path = os.path.join(possible_service_dir, "app.py")
+        
+        if os.path.exists(script_path):
+            return {"status": "ok", "message": "Service scripts found."}
+        else:
+            return {"status": "error", "message": "Service scripts not found (app.py missing)."}
+    except Exception as e:
+         return {"status": "error", "message": str(e)}
+
 @router.post("/list-folders")
 async def list_folders(payload: dict = Body(...)):
     try:
