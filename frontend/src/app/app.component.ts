@@ -83,6 +83,15 @@ export class AppComponent implements OnInit {
               
               if (res.status === 'ok') {
                   console.log('%c ✅ Service Core: Active (Ready)', 'color: green; font-weight: bold;');
+                  
+                  // Mostrar estado Headless
+                  if (res.headless_mode) {
+                      const isHeadless = String(res.headless_mode).toLowerCase().includes('true');
+                      const headlessColor = isHeadless ? 'color: #00ffff;' : 'color: #ffd700;'; // Cyan or Gold
+                      const icon = isHeadless ? '👻' : '🖥️';
+                      console.log(`%c ${icon} Headless Mode: ${res.headless_mode}`, `${headlessColor} font-weight: bold;`);
+                  }
+
               } else {
                   console.log('%c ⚠️ Service Core: Warning', 'color: orange; font-weight: bold;', res.message);
               }

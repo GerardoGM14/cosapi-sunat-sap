@@ -2,12 +2,13 @@ from fastapi import APIRouter, HTTPException, Body
 import subprocess
 import os
 import sys
+from dotenv import dotenv_values
 
 router = APIRouter()
 
 @router.get("/check-service")
 async def check_service():
-    """Verifica si el servicio de Sunat/Sap (scripts) es accesible."""
+    """Verifica si el servicio de Sunat/Sap (scripts) es accesible y su configuración."""
     try:
         # Lógica similar a bot.py para encontrar la carpeta
         current_dir = os.getcwd()
@@ -16,9 +17,22 @@ async def check_service():
              possible_service_dir = os.path.abspath(os.path.join(current_dir, "sunat-sap-service"))
         
         script_path = os.path.join(possible_service_dir, "app.py")
+        env_path = os.path.join(possible_service_dir, ".env")
+        
+        headless_status = "Unknown"
+        if os.path.exists(env_path):
+            config = dotenv_values(env_path)
+            headless_status = config.get("HEADLESS", "true (default)")
+        else:
+            headless_status = "true (default - .env missing)"
         
         if os.path.exists(script_path):
-            return {"status": "ok", "message": "Service scripts found."}
+            return {
+                "status": "ok", 
+                "message": "Service scripts found.", 
+                "headless_mode": headless_status,
+                "service_path": possible_service_dir
+            }
         else:
             return {"status": "error", "message": "Service scripts not found (app.py missing)."}
     except Exception as e:
