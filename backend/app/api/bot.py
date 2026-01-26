@@ -77,6 +77,16 @@ async def run_bot(config: BotConfig):
         env["CONFIG_METHOD"] = "console" # Force console method to use CLI args
         env["PYTHONPATH"] = service_dir # Set pythonpath to service root
 
+        # Configuración para mostrar navegador en Linux (si no es headless)
+        if sys.platform == "linux":
+            # Si no hay DISPLAY, intentamos usar :0 (pantalla principal)
+            if "DISPLAY" not in env:
+                print("⚠️ Variable DISPLAY no encontrada. Asignando DISPLAY=:0 para intentar mostrar navegador.")
+                env["DISPLAY"] = ":0"
+            else:
+                print(f"ℹ️ Usando DISPLAY existente: {env['DISPLAY']}")
+
+
         # Normalizar ruta a formato Windows (backslashes) para evitar problemas y cumplir con preferencia de usuario
         folder_path = os.path.normpath(config.general.folder)
 
