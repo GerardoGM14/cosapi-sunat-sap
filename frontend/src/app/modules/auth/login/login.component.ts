@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { environment } from '../../../../environments/environment';
+import { AppConfigService } from '../../../services/app-config.service';
 
 @Component({
   selector: 'app-login',
@@ -17,28 +17,29 @@ export class LoginComponent {
   loading = false;
   loginSuccess = false;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, private configService: AppConfigService) {}
 
   login() {
     this.loading = true;
     this.errorMessage = '';
     this.loginSuccess = false;
 
-    // URL del Backend Python (Configurada en environments)
-    const apiUrl = `${environment.apiUrl}/auth/login`;
+    // URL del Backend Python (Cargada desde config.json)
+    const apiUrl = `${this.configService.apiUrl}/auth/login`;
 
     this.http.post<any>(apiUrl, this.credentials).subscribe({
       next: (response) => {
         console.log('Login exitoso', response);
         localStorage.setItem('token', response.access_token);
+        localStorage.setItem('username', this.credentials.username);
         
         // Activar estado de éxito
         this.loading = false;
         this.loginSuccess = true;
 
-        // Esperar 1.5 segundos y redirigir a Configuración
+        // Esperar 1.5 segundos y redirigir a Dashboard
         setTimeout(() => {
-          this.router.navigate(['/config']);
+          this.router.navigate(['/ejecuciones']);
         }, 1500);
       },
       error: (error) => {

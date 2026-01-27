@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
+import { AppConfigService } from '../../../services/app-config.service';
 
 @Component({
   selector: 'app-config',
@@ -83,9 +83,14 @@ export class ConfigComponent {
 
   sunatImage: string = 'assets/images/logo-sunat.svg';
   sapImage: string = 'assets/images/logo-sap.png';
+  isInsideDashboard = false;
 
-  constructor(private router: Router, private http: HttpClient) {
+  constructor(private router: Router, private http: HttpClient, private configService: AppConfigService) {
     // No cargar configuración guardada para iniciar siempre limpio
+    // Since we removed /dashboard prefix, we consider we are always in dashboard/layout if we are here
+    // unless we are in a specific standalone route which we don't have right now.
+    // Adjusted logic to default to true as it is rendered inside DashboardComponent
+    this.isInsideDashboard = true; 
   }
 
   toggleDropdown() {
@@ -260,7 +265,7 @@ export class ConfigComponent {
     console.log('Iniciando proceso...', payload);
     this.showSuccess('Iniciando proceso...');
 
-    this.http.post(`${environment.apiUrl}/bot/run`, payload)
+    this.http.post(`${this.configService.apiUrl}/bot/run`, payload)
       .subscribe({
         next: (res: any) => {
           console.log('Bot response:', res);
@@ -318,7 +323,7 @@ export class ConfigComponent {
 
   loadFolders(path: string) {
     this.browserLoading = true;
-    this.http.post<any>(`${environment.apiUrl}/utils/list-folders`, { path })
+    this.http.post<any>(`${this.configService.apiUrl}/utils/list-folders`, { path })
       .subscribe({
         next: (res) => {
           this.browserCurrentPath = res.current_path;

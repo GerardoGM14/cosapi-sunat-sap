@@ -10,3 +10,21 @@ body {
   background-color: #f5f7fa;
   color: #333;
 }
+
+/* Standard Page Header */
+.page-header {
+  margin-bottom: 1rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 0.2rem 0;
+}
+
+.page-subtitle {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  margin: 0;
+}

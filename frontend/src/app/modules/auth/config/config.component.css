@@ -1,11 +1,17 @@
 .config-page {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  align-items: flex-start; /* Changed from center to allow scrolling if tall */
+  min-height: 100%;
+  /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); Removed to blend with dashboard */
   font-family: 'KoHo', sans-serif;
-  padding: 20px;
+  padding: 0; /* Let dashboard handle padding */
+}
+
+/* Dashboard Layout Adaptation */
+.config-page.dashboard-layout {
+  display: block;
+  min-height: auto;
 }
 
 .config-card {
@@ -16,7 +22,18 @@
   max-width: 1000px;
   padding: 2.5rem;
   zoom: 0.9;
-  transition: height 0.3s ease; /* Smooth height transition for the card itself if needed */
+  transition: height 0.3s ease;
+  margin: 0 auto; /* Center horizontally */
+}
+
+/* Dashboard Card Adaptation */
+.config-card.dashboard-card {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  max-width: 100%;
 }
 
 .config-nav {

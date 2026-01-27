@@ -1,0 +1,264 @@
+.page-container {
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Page Header styles are now global in styles.css */
+
+/* Toolbar */
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 350px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #95a5a6;
+  width: 18px;
+  height: 18px;
+}
+
+.search-input-wrapper input {
+  width: 100%;
+  padding: 0.6rem 1rem 0.6rem 2.8rem;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  background-color: #ffffff;
+  transition: border-color 0.2s;
+}
+
+.search-input-wrapper input:focus {
+  border-color: #0b4f6c;
+}
+
+.filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-label {
+  font-size: 0.9rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.filter-select {
+  padding: 0.4rem 2rem 0.4rem 1rem;
+  border: 1px solid #dfe6e9;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Table */
+.table-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  overflow-x: auto;
+  border: 1px solid #ecf0f1;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background-color: #f8f9fa;
+  color: #7f8c8d;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #ecf0f1;
+  white-space: nowrap;
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 1px solid #ecf0f1;
+  color: #2c3e50;
+  vertical-align: middle;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.cell-primary {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+.cell-secondary {
+  color: #95a5a6;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.whitelist-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #f1f2f6;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #57606f;
+}
+
+.date-picker-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 140px;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #dfe6e9;
+  border-radius: 4px;
+  color: #b2bec3;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Status Buttons */
+.actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btn-status {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.status-running {
+  background-color: #34495e;
+  color: white;
+}
+
+.status-processing {
+  background-color: #e3f2fd;
+  color: #2196f3;
+  border: 1px solid #bbdefb;
+}
+
+.status-icon {
+  font-size: 0.7rem;
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #2196f3;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.btn-icon-sm {
+  background: none;
+  border: none;
+  color: #95a5a6;
+  cursor: pointer;
+  padding: 0.4rem;
+}
+
+.btn-icon-sm:hover {
+  color: #2c3e50;
+}
+
+/* Pagination */
+.pagination-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  border-top: 1px solid #ecf0f1;
+  background-color: white;
+  padding: 1rem;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.page-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.page-btn:hover {
+  background-color: #f1f2f6;
+}
+
+.page-btn.active {
+  background-color: #2196f3;
+  color: white;
+}
+
+.page-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rows-per-page {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rows-per-page select {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid #dfe6e9;
+  border-radius: 4px;
+  color: #2c3e50;
+  outline: none;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

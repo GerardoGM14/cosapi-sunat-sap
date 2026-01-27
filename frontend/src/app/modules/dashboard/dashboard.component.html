@@ -3,280 +3,119 @@
   <!-- Mobile Overlay -->
   <div class="mobile-overlay" [class.active]="isMobileSidebarOpen" (click)="closeMobileSidebar()"></div>
 
-  <!-- Sidebar (Estilo Vertical Delgado/Iconos) -->
+  <!-- Sidebar Moderno -->
   <aside class="sidebar" [class.mobile-open]="isMobileSidebarOpen">
+    
+    <!-- Header Logo -->
     <div class="sidebar-header">
-      <div class="logo-icon">A</div> <!-- A de AutoSUN -->
-      <button class="btn-close-sidebar" (click)="closeMobileSidebar()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      <div class="brand-container">
+        <span class="brand-text">COSAPI</span>
+        <div class="brand-loader"></div>
+      </div>
+      <button class="btn-toggle-sidebar" (click)="closeMobileSidebar()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
       </button>
     </div>
 
+    <!-- Navigation -->
     <nav class="sidebar-nav">
       <ul>
-        <li class="active" title="Dashboard">
-          <a href="#">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
+        <!-- Ejecuciones (Home) -->
+        <li routerLinkActive="active" [routerLinkActiveOptions]="{exact: false}">
+          <a routerLink="/ejecuciones" class="nav-item">
+            <span class="icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            </span>
+            <span class="link-text">Ejecuciones</span>
           </a>
         </li>
-        <li title="Carga de Facturas">
-          <a href="#">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="12" y1="18" x2="12" y2="12"></line>
-              <line x1="9" y1="15" x2="15" y2="15"></line>
-            </svg>
+
+        <!-- Configuración SAP -->
+        <li routerLinkActive="active">
+          <a routerLink="/config" class="nav-item">
+            <span class="icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </span>
+            <span class="link-text">Configuración SAP</span>
           </a>
         </li>
-        <li title="Historial">
-          <a href="#">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
+
+        <!-- Programación (Dummy) -->
+        <li>
+          <a href="#" class="nav-item">
+            <span class="icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </span>
+            <span class="link-text">Programación</span>
           </a>
         </li>
-        <li title="Reportes">
-          <a href="#">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10"></line>
-              <line x1="12" y1="20" x2="12" y2="4"></line>
-              <line x1="6" y1="20" x2="6" y2="14"></line>
-            </svg>
+
+        <!-- Maestros (Group) -->
+        <li class="nav-group-header">
+          <a href="#" class="nav-item group-toggle">
+            <span class="icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </span>
+            <span class="link-text">Maestros</span>
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </a>
+        </li>
+
+        <!-- Subitems Maestros (Dummy) -->
+        <li class="sub-item">
+          <a href="#" class="nav-item">
+            <span class="icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            </span>
+            <span class="link-text">Sociedades</span>
+          </a>
+        </li>
+        <li class="sub-item">
+          <a href="#" class="nav-item">
+            <span class="icon-wrapper">
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </span>
+            <span class="link-text">Usuarios</span>
+          </a>
+        </li>
+        <li class="sub-item">
+          <a href="#" class="nav-item">
+            <span class="icon-wrapper">
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </span>
+            <span class="link-text">Proveedores</span>
           </a>
         </li>
       </ul>
     </nav>
 
+    <!-- Footer Profile -->
     <div class="sidebar-footer">
-      <button (click)="logout()" class="btn-logout-icon" title="Cerrar Sesión">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-          <polyline points="16 17 21 12 16 7"></polyline>
-          <line x1="21" y1="12" x2="9" y2="12"></line>
-        </svg>
-      </button>
+      <div class="user-profile">
+        <div class="avatar">
+          <img [src]="avatarUrl" [alt]="username">
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ username }}</span>
+          <span class="user-email">{{ userEmail }}</span>
+        </div>
+        <button class="btn-options" (click)="logout()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+        </button>
+      </div>
     </div>
   </aside>
 
-  <!-- Main Content Wrapper -->
+  <!-- Main Wrapper -->
   <div class="main-wrapper">
     
-    <!-- Top Header -->
-    <header class="top-header">
-      <button class="btn-mobile-toggle" (click)="toggleMobileSidebar()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-      </button>
+    <!-- Navbar (Componente Reutilizable) -->
+    <app-navbar (toggleSidebar)="toggleMobileSidebar()"></app-navbar>
 
-      <div class="search-bar">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" placeholder="Buscar documento, factura o proveedor...">
-      </div>
-      
-      <div class="header-actions">
-        <button class="action-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-            <polyline points="22,6 12,13 2,6"></polyline>
-          </svg>
-        </button>
-        <button class="action-btn notification">
-          <span class="badge">3</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-        </button>
-        
-        <div class="user-profile">
-          <div class="user-info">
-            <span class="name">{{ username }}</span>
-            <span class="role">Administrador</span>
-          </div>
-          <div class="avatar">
-            <img src="assets/images/logo.webp" alt="User" onerror="this.src='https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff'">
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Content Area -->
+    <!-- Page Content -->
     <main class="content-area">
-      
-      <!-- Top Row: Welcome Card & Key Stats -->
-      <div class="dashboard-row top-row">
-        <!-- Welcome / Hero Card -->
-        <div class="card hero-card">
-          <div class="hero-content">
-            <div class="hero-text">
-              <h2>¡Hola de nuevo, {{ username }}! 🎉</h2>
-              <p>Tienes <strong>12 facturas</strong> pendientes de revisión hoy.</p>
-              <button class="btn-hero">Ver Pendientes</button>
-            </div>
-            <div class="hero-decoration">
-              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#F4F4F9" d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.5C83.5,16.7,75.1,30,65.3,41.2C55.5,52.4,44.3,61.5,31.7,68.2C19.1,74.9,5.1,79.2,-8.1,78.1C-21.3,77,-33.7,70.5,-44.6,62.1C-55.5,53.7,-64.9,43.4,-71.4,31.3C-77.9,19.2,-81.5,5.3,-79.8,-7.9C-78.1,-21.1,-71.1,-33.6,-61.6,-43.3C-52.1,-53,-40.1,-59.9,-27.9,-67.4C-15.7,-74.9,-3.3,-83,10.2,-84.6C23.7,-86.2,40.1,-81.3,45.7,-76.3Z" transform="translate(100 100)" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="stats-group">
-          <div class="card stat-widget">
-            <div class="stat-icon-wrapper bg-blue">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-            </div>
-            <div class="stat-details">
-              <h3>230</h3>
-              <p>Procesadas</p>
-            </div>
-          </div>
-
-          <div class="card stat-widget">
-            <div class="stat-icon-wrapper bg-green">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
-            <div class="stat-details">
-              <h3>8.5k</h3>
-              <p>Monto Total (S/)</p>
-            </div>
-          </div>
-
-          <div class="card stat-widget">
-            <div class="stat-icon-wrapper bg-orange">
-               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            </div>
-            <div class="stat-details">
-              <h3>12</h3>
-              <p>Observadas</p>
-            </div>
-          </div>
-
-          <div class="card stat-widget">
-             <div class="stat-icon-wrapper bg-purple">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-            </div>
-            <div class="stat-details">
-              <h3>98%</h3>
-              <p>Efectividad</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Second Row: Charts & Tables -->
-      <div class="dashboard-row main-row">
-        
-        <!-- Activity Chart Section -->
-        <div class="card chart-section">
-          <div class="card-header">
-            <h3>Volumen de Procesamiento</h3>
-            <div class="card-actions">
-              <span class="legend-dot income"></span> Procesadas
-              <span class="legend-dot expense"></span> Rechazadas
-            </div>
-          </div>
-          <div class="chart-placeholder">
-            <!-- Simulación Visual de Barras -->
-            <div class="bar-chart">
-              <div class="bar-group">
-                <div class="bar primary" style="height: 40%"></div>
-                <div class="bar secondary" style="height: 10%"></div>
-                <span class="label">Lun</span>
-              </div>
-              <div class="bar-group">
-                <div class="bar primary" style="height: 65%"></div>
-                <div class="bar secondary" style="height: 15%"></div>
-                <span class="label">Mar</span>
-              </div>
-              <div class="bar-group">
-                <div class="bar primary" style="height: 85%"></div>
-                <div class="bar secondary" style="height: 5%"></div>
-                <span class="label">Mié</span>
-              </div>
-              <div class="bar-group">
-                <div class="bar primary" style="height: 55%"></div>
-                <div class="bar secondary" style="height: 20%"></div>
-                <span class="label">Jue</span>
-              </div>
-              <div class="bar-group">
-                <div class="bar primary" style="height: 70%"></div>
-                <div class="bar secondary" style="height: 8%"></div>
-                <span class="label">Vie</span>
-              </div>
-              <div class="bar-group">
-                <div class="bar primary" style="height: 30%"></div>
-                <div class="bar secondary" style="height: 5%"></div>
-                <span class="label">Sáb</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Documents List -->
-        <div class="card list-section">
-          <div class="card-header">
-            <h3>Últimas Facturas</h3>
-            <button class="btn-text">Ver Todo</button>
-          </div>
-          <ul class="doc-list">
-            <li class="doc-item">
-              <div class="doc-icon bg-light-blue">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-              </div>
-              <div class="doc-info">
-                <h4>F001-000432</h4>
-                <p>Tech Solutions SAC</p>
-              </div>
-              <span class="status-badge success">Validado</span>
-            </li>
-            <li class="doc-item">
-              <div class="doc-icon bg-light-orange">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-              </div>
-              <div class="doc-info">
-                <h4>E001-9982</h4>
-                <p>Consultoría Global</p>
-              </div>
-              <span class="status-badge warning">Pendiente</span>
-            </li>
-            <li class="doc-item">
-              <div class="doc-icon bg-light-blue">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-              </div>
-              <div class="doc-info">
-                <h4>F002-1120</h4>
-                <p>Servicios Logísticos</p>
-              </div>
-              <span class="status-badge success">Validado</span>
-            </li>
-             <li class="doc-item">
-              <div class="doc-icon bg-light-red">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              </div>
-              <div class="doc-info">
-                <h4>F099-ERROR</h4>
-                <p>Sin RUC Válido</p>
-              </div>
-              <span class="status-badge danger">Error</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
+      <router-outlet></router-outlet>
     </main>
+    
   </div>
 </div>

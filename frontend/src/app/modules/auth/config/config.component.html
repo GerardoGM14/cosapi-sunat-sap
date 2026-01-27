@@ -1,5 +1,12 @@
-<div class="config-page">
-  <div class="config-card">
+<div class="config-page" [class.dashboard-layout]="isInsideDashboard">
+  
+  <!-- Standard Page Header (Dashboard Only) -->
+  <div class="page-header" *ngIf="isInsideDashboard">
+    <h1 class="page-title">Configuración SAP/SUNAT</h1>
+    <p class="page-subtitle">Ajusta los parámetros de conexión y ejecución para el Bot.</p>
+  </div>
+
+  <div class="config-card" [class.dashboard-card]="isInsideDashboard">
     
 
     <div *ngIf="errorMessage || successMessage" class="toast-notification" [class.success]="successMessage && !errorMessage">
@@ -20,15 +27,15 @@
       </div>
     </div>
     
-    <div class="config-nav">
+    <div class="config-nav" *ngIf="!isInsideDashboard">
         <button class="btn-back-login" (click)="backToLogin()">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             Regresar al Login
         </button>
     </div>
 
-    <!-- Sección Superior: Imagen/Visual -->
-    <div class="config-visual">
+    <!-- Sección Superior: Imagen/Visual si NO está en Dashboard -->
+    <div class="config-visual" *ngIf="!isInsideDashboard">
       <div class="visual-content">
         <h2>Configuración</h2>
         <p>Ajusta los parámetros de conexión para el Bot.</p>
@@ -37,7 +44,7 @@
     </div>
 
     <!-- Sección Inferior: Formulario de Configuración -->
-    <div class="config-content-container">
+    <div class="config-content-container" [class.dashboard-mode]="isInsideDashboard">
       <div class="config-animated-content">
         
         <div class="config-split">

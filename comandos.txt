@@ -13,8 +13,8 @@ Directorio: `backend/`
 3. Ejecutar servidor de desarrollo:
    uvicorn app.main:app --reload
 
-   El servidor estará disponible en: http://localhost:8000
-   Documentación API (Swagger): http://localhost:8000/docs
+   El servidor estará disponible en: http://localhost:8001
+   Documentación API (Swagger): http://localhost:8001/docs
 
 ## Frontend (Angular)
 Directorio: `frontend/`

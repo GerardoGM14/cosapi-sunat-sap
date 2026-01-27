@@ -1,0 +1,136 @@
+/* Header */
+.top-header {
+  height: 50px;
+  background-color: white;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  position: relative; /* Ensure shadow is visible */
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 100%;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: 100%;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  color: #7f8c8d;
+  height: 100%;
+  padding: 20px;
+}
+
+.breadcrumb-icon {
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.breadcrumb-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.breadcrumb-item {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-item.active {
+  color: #34495e;
+  font-weight: 600;
+}
+
+.breadcrumb-separator {
+  margin: 0 0.8rem;
+  color: #bdc3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Connection Status */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  height: 100%;
+}
+
+.wifi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wifi-icon svg {
+  color: #2ecc71;
+  display: block;
+}
+
+.status-text {
+  font-weight: 600;
+  color: #2d3436;
+  font-size: 0.95rem;
+}
+
+/* Notification & Actions */
+.action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #7f8c8d;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.action-btn:hover {
+  background-color: #f8f9fa;
+  color: #0b4f6c;
+}
+
+/* Mobile Toggle */
+.btn-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+@media (max-width: 992px) {
+  .btn-mobile-toggle {
+    display: block;
+  }
+}
+
+@media (max-width: 576px) {
+  .top-header {
+      padding: 0 1rem;
+  }
+}
