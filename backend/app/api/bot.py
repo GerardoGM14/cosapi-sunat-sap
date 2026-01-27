@@ -79,18 +79,15 @@ async def run_bot(config: BotConfig):
 
         # Configuración para mostrar navegador en Linux (si no es headless)
         if sys.platform == "linux":
-            # Si no hay DISPLAY, intentamos usar :0 (pantalla principal)
-            if "DISPLAY" not in env:
+            # Si no hay DISPLAY o está vacío, intentamos usar :0
+            if not env.get("DISPLAY"):
                 # IMPORTANTE: Para que funcione en una sesión de usuario real en Linux,
                 # necesitamos apuntar al display correcto. Usualmente es :0 o :1.
-                # Y también necesitamos acceso a Xauthority si el usuario que corre el servicio
-                # no es el mismo que tiene la sesión gráfica abierta (aunque aquí parece ser el mismo 'sertech').
                 
-                print("⚠️ Variable DISPLAY no encontrada. Asignando DISPLAY=:0 y configurando XAUTHORITY.")
+                print("⚠️ Variable DISPLAY no encontrada o vacía. Asignando DISPLAY=:0")
                 env["DISPLAY"] = ":0"
                 
                 # Intentar encontrar el archivo .Xauthority del usuario actual
-                # Asumimos que el home es el del usuario que ejecuta el script
                 home_dir = os.path.expanduser("~")
                 xauth_path = os.path.join(home_dir, ".Xauthority")
                 
@@ -98,14 +95,23 @@ async def run_bot(config: BotConfig):
                     env["XAUTHORITY"] = xauth_path
                     print(f"ℹ️ Usando XAUTHORITY: {xauth_path}")
                 else:
-                    # Fallback: intentar buscar en /home/sertech/.Xauthority explícitamente si estamos como root o similar
-                    # Basado en el log: /home/sertech
+                    # Fallback
                     possible_xauth = "/home/sertech/.Xauthority"
                     if os.path.exists(possible_xauth):
                          env["XAUTHORITY"] = possible_xauth
                          print(f"ℹ️ Usando XAUTHORITY explícito: {possible_xauth}")
             else:
                 print(f"ℹ️ Usando DISPLAY existente: {env['DISPLAY']}")
+        
+        # Intentar dar permisos con xhost (solo si tenemos DISPLAY)
+        if sys.platform == "linux" and env.get("DISPLAY"):
+            try:
+                # Ejecutar xhost +local: para permitir conexiones locales
+                # Usamos el mismo entorno con XAUTHORITY configurado
+                subprocess.run(["xhost", "+local:"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+                print("ℹ️ Intenté ejecutar 'xhost +local:' para dar permisos gráficos.")
+            except Exception as e:
+                print(f"⚠️ No se pudo ejecutar xhost: {e}")
 
 
         # Normalizar ruta a formato Windows (backslashes) para evitar problemas y cumplir con preferencia de usuario
@@ -152,13 +158,18 @@ async def run_bot(config: BotConfig):
         print("="*60)
         
         # Abrir archivo de log en modo append
-        # Usamos 'a' para no perder historial, o 'w' para limpiar cada vez.
-        # Mejor 'w' para que el usuario vea el último intento claramente.
         log_file = open(log_file_path, "w", encoding="utf-8")
         
         # Escribir cabecera en el log
         log_file.write(f"--- START EXECUTION: {config.general.fecha} ---\n")
         log_file.write(f"Command: {full_command_str}\n")
+        
+        # Debug: Log environment variables relevant to display
+        if sys.platform == "linux":
+            log_file.write(f"DEBUG ENV: DISPLAY={env.get('DISPLAY')}\n")
+            log_file.write(f"DEBUG ENV: XAUTHORITY={env.get('XAUTHORITY')}\n")
+            log_file.write(f"DEBUG ENV: USER={env.get('USER')}\n")
+            
         log_file.write("-" * 50 + "\n")
         log_file.flush()
 
