@@ -243,77 +243,34 @@ export class ConfigComponent {
   confirmProcess() {
     this.isConfirmModalOpen = false;
     
-    console.group('%c 🚀 Starting Process Execution ', 'background: #222; color: #bada55; font-size: 14px; padding: 4px; border-radius: 4px;');
-    console.log('Timestamp:', new Date().toISOString());
-    console.log('Configuration Data:', JSON.parse(JSON.stringify(this.configData)));
+    // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY
+    const dateParts = this.configData.general.fecha.split('-');
+    const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
 
-    try {
-      if (!this.configData.general.fecha) {
-        throw new Error('Fecha is empty or undefined');
+    // Crear payload con fecha formateada
+    const payload = {
+      sunat: this.configData.sunat,
+      sap: this.configData.sap,
+      general: {
+        ...this.configData.general,
+        fecha: formattedDate
       }
+    };
 
-      // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY
-      const dateParts = this.configData.general.fecha.split('-');
-      if (dateParts.length !== 3) {
-        throw new Error(`Invalid date format (expected YYYY-MM-DD): ${this.configData.general.fecha}`);
-      }
+    console.log('Iniciando proceso...', payload);
+    this.showSuccess('Iniciando proceso...');
 
-      const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-      console.log(`Date Conversion: ${this.configData.general.fecha} -> ${formattedDate}`);
-
-      // Validar que sea una fecha real
-      const dateObj = new Date(this.configData.general.fecha);
-      if (isNaN(dateObj.getTime())) {
-        throw new Error(`Invalid Date Object detected: ${this.configData.general.fecha}`);
-      }
-
-      // Crear payload con fecha formateada
-      const payload = {
-        sunat: this.configData.sunat,
-        sap: this.configData.sap,
-        general: {
-          ...this.configData.general,
-          fecha: formattedDate
+    this.http.post(`${environment.apiUrl}/bot/run`, payload)
+      .subscribe({
+        next: (res: any) => {
+          console.log('Bot response:', res);
+          this.showSuccess('Proceso iniciado correctamente.');
+        },
+        error: (err) => {
+          console.error('Error starting bot:', err);
+          this.showError('Error al iniciar el proceso: ' + (err.error?.detail || err.message));
         }
-      };
-
-      console.log('Payload prepared:', payload);
-      this.showSuccess('Iniciando proceso...');
-
-      this.http.post(`${environment.apiUrl}/bot/run`, payload)
-        .subscribe({
-          next: (res: any) => {
-            console.log('%c ✅ Process Started Successfully ', 'color: green; font-weight: bold;');
-            console.log('Backend Response:', res);
-            this.showSuccess('Proceso iniciado correctamente.');
-            console.groupEnd();
-          },
-          error: (err) => {
-            console.log('%c ❌ Process Start Failed ', 'color: red; font-weight: bold;');
-            console.error('Detailed Error:', err);
-            
-            let errorMsg = 'Error desconocido';
-            if (err.error && err.error.detail) {
-              errorMsg = err.error.detail;
-              console.error('Backend Error Detail:', err.error.detail);
-            } else if (err.message) {
-              errorMsg = err.message;
-            }
-            
-            if (err.status === 0) {
-              console.error('⚠️ Network Error: Could not reach backend. Check if backend is running and CORS is configured.');
-            }
-
-            this.showError('Error al iniciar el proceso: ' + errorMsg);
-            console.groupEnd();
-          }
-        });
-    } catch (e: any) {
-      console.log('%c ❌ Client-Side Validation Error ', 'color: red; font-weight: bold;');
-      console.error('Validation Error:', e);
-      this.showError('Error de validación: ' + e.message);
-      console.groupEnd();
-    }
+      });
   }
 
   cancelProcess() {

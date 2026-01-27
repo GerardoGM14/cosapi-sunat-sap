@@ -118,35 +118,53 @@ async def run_bot(config: BotConfig):
 
         full_command_str = " ".join([quote_for_log(arg) for arg in cmd_args])
 
+        # Archivo de logs
+        log_file_path = os.path.join(service_dir, "bot_execution.log")
+        
         print("\n" + "="*60)
         print("🚀 COMANDO DE EJECUCIÓN (VISIBLE EN TERMINAL):")
         print("="*60)
         print(f"📂 CWD (Directorio de trabajo): {service_dir}")
         print(f"🐍 Python Executable          : {python_executable}")
+        print(f"📝 Log File                   : {log_file_path}")
         print(full_command_str)
         print("="*60)
-        print("⚠️  NOTA: Los logs del proceso aparecerán a continuación en esta misma terminal.")
-        print("="*60 + "\n")
+        
+        # Abrir archivo de log en modo append
+        # Usamos 'a' para no perder historial, o 'w' para limpiar cada vez.
+        # Mejor 'w' para que el usuario vea el último intento claramente.
+        log_file = open(log_file_path, "w", encoding="utf-8")
+        
+        # Escribir cabecera en el log
+        log_file.write(f"--- START EXECUTION: {config.general.fecha} ---\n")
+        log_file.write(f"Command: {full_command_str}\n")
+        log_file.write("-" * 50 + "\n")
+        log_file.flush()
 
-        # Ejecutar en segundo plano
-        # Se modificó para heredar la consola actual y mostrar logs directamente aquí
+        # Ejecutar en segundo plano redirigiendo salida al archivo
         process = subprocess.Popen(
             cmd_args,
             cwd=service_dir, # IMPORTANTE: Ejecutar desde la carpeta del servicio
             env=env,
-            text=True
-            # Se eliminó creationflags=subprocess.CREATE_NEW_CONSOLE para no abrir ventana separada
-            # Se eliminó stdout/stderr=PIPE para que herede la salida de este proceso (terminal visible)
+            text=True,
+            stdout=log_file,
+            stderr=subprocess.STDOUT # Redirigir stderr a stdout (mismo archivo)
         )
         
-        # No esperamos el resultado completo aquí para no bloquear, 
-        # pero podríamos leer las primeras líneas o simplemente confirmar inicio.
-        # Dado que es un proceso largo, retornamos éxito inmediato.
+        # No cerramos log_file aquí inmediatamente porque el proceso lo usa,
+        # pero como es Popen, el file handle se pasa al proceso hijo.
+        # Sin embargo, en Python, si cerramos el handle en el padre, el hijo sigue teniendo acceso?
+        # Sí, pero para estar seguros y evitar ResourceWarning, podemos dejarlo que el GC lo maneje 
+        # o simplemente confiar en que subprocess duplica el descriptor.
+        # Lo correcto es no cerrarlo explícitamente si queremos seguir escribiendo desde el padre, 
+        # pero aquí ya no escribimos más.
+        # De hecho, subprocess.Popen toma el file descriptor.
         
         return {
             "status": "success", 
-            "message": "El proceso ha iniciado correctamente.", 
-            "pid": process.pid
+            "message": "El proceso ha iniciado correctamente. Revise bot_execution.log para detalles.", 
+            "pid": process.pid,
+            "log_file": log_file_path
         }
 
     except Exception as e:
