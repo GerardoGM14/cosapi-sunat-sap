@@ -81,8 +81,29 @@ async def run_bot(config: BotConfig):
         if sys.platform == "linux":
             # Si no hay DISPLAY, intentamos usar :0 (pantalla principal)
             if "DISPLAY" not in env:
-                print("⚠️ Variable DISPLAY no encontrada. Asignando DISPLAY=:0 para intentar mostrar navegador.")
+                # IMPORTANTE: Para que funcione en una sesión de usuario real en Linux,
+                # necesitamos apuntar al display correcto. Usualmente es :0 o :1.
+                # Y también necesitamos acceso a Xauthority si el usuario que corre el servicio
+                # no es el mismo que tiene la sesión gráfica abierta (aunque aquí parece ser el mismo 'sertech').
+                
+                print("⚠️ Variable DISPLAY no encontrada. Asignando DISPLAY=:0 y configurando XAUTHORITY.")
                 env["DISPLAY"] = ":0"
+                
+                # Intentar encontrar el archivo .Xauthority del usuario actual
+                # Asumimos que el home es el del usuario que ejecuta el script
+                home_dir = os.path.expanduser("~")
+                xauth_path = os.path.join(home_dir, ".Xauthority")
+                
+                if os.path.exists(xauth_path):
+                    env["XAUTHORITY"] = xauth_path
+                    print(f"ℹ️ Usando XAUTHORITY: {xauth_path}")
+                else:
+                    # Fallback: intentar buscar en /home/sertech/.Xauthority explícitamente si estamos como root o similar
+                    # Basado en el log: /home/sertech
+                    possible_xauth = "/home/sertech/.Xauthority"
+                    if os.path.exists(possible_xauth):
+                         env["XAUTHORITY"] = possible_xauth
+                         print(f"ℹ️ Usando XAUTHORITY explícito: {possible_xauth}")
             else:
                 print(f"ℹ️ Usando DISPLAY existente: {env['DISPLAY']}")
 

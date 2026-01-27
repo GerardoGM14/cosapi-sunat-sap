@@ -80,7 +80,8 @@ async def appSunat(args: ISunat) -> IReturn:
             logger.log(f"❌ Error en la iteración {i+1}: {e}", color=Colors.BRIGHT_RED)
             continue
         finally:
-            await browser.close()
+            if 'browser' in locals():
+                await browser.close()
     else:
         msg = f'⚠️ Después de {intento} intentos no se pudo completar la operación'
         logger.log(msg, color=Colors.YELLOW)
