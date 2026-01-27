@@ -79,13 +79,31 @@ async def run_bot(config: BotConfig):
 
         # Configuración para mostrar navegador en Linux (si no es headless)
         if sys.platform == "linux":
-            # Si no hay DISPLAY o está vacío, intentamos usar :0
+            # Si no hay DISPLAY o está vacío, intentamos configurarlo
             if not env.get("DISPLAY"):
-                # IMPORTANTE: Para que funcione en una sesión de usuario real en Linux,
-                # necesitamos apuntar al display correcto. Usualmente es :0 o :1.
+                # Primero, intentamos leer si existe un archivo .env en sunat-sap-service que tenga DISPLAY
+                # Esto permite configuración manual por parte del usuario
+                env_file_path = os.path.join(service_dir, ".env")
+                display_from_env = None
+                if os.path.exists(env_file_path):
+                    try:
+                        with open(env_file_path, "r") as f:
+                            for line in f:
+                                if line.strip().startswith("DISPLAY="):
+                                    display_from_env = line.strip().split("=", 1)[1].strip()
+                                    break
+                    except:
+                        pass
                 
-                print("⚠️ Variable DISPLAY no encontrada o vacía. Asignando DISPLAY=:0")
-                env["DISPLAY"] = ":0"
+                if display_from_env:
+                    env["DISPLAY"] = display_from_env
+                    print(f"ℹ️ Usando DISPLAY desde .env: {display_from_env}")
+                else:
+                    # Fallback por defecto. CAMBIO: Usamos :1 como primera opción dado el reporte del usuario.
+                    # Idealmente probaríamos ambos, pero subprocess necesita uno fijo.
+                    # El usuario reportó que su pantalla es :1.
+                    print("⚠️ Variable DISPLAY no encontrada o vacía. Asignando DISPLAY=:1 (predeterminado para este servidor)")
+                    env["DISPLAY"] = ":1"
                 
                 # Intentar encontrar el archivo .Xauthority del usuario actual
                 home_dir = os.path.expanduser("~")
