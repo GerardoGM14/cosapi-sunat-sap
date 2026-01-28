@@ -75,6 +75,22 @@
   align-items: center;
   gap: 0.8rem;
   height: 100%;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.connection-status:hover {
+  background-color: #f1f2f6;
+}
+
+.connection-status.offline .status-text {
+  color: #e74c3c;
+}
+
+.connection-status.offline .wifi-icon svg {
+  stroke: #e74c3c;
 }
 
 .wifi-icon {
@@ -92,6 +108,185 @@
   font-weight: 600;
   color: #2d3436;
   font-size: 0.95rem;
+}
+
+/* Network Modal Styles */
+.network-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 99999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.network-modal {
+  background-color: white;
+  border-radius: 12px;
+  width: 320px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* @keyframes slideDown removed in favor of scaleUp */
+
+.network-modal-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.network-modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #95a5a6;
+  display: flex;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background-color: #f1f2f6;
+  color: #2c3e50;
+}
+
+.network-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.status-indicator {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.icon-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.status-indicator.online .icon-circle {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.status-indicator.offline .icon-circle {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0.6;
+}
+
+.status-indicator.online .pulse-ring {
+  background-color: rgba(46, 204, 113, 0.2);
+  animation: pulse-green 2s infinite;
+}
+
+.status-indicator.offline .pulse-ring {
+  background-color: rgba(231, 76, 60, 0.2);
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+@keyframes pulse-red {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+.status-details h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #2c3e50;
+}
+
+.status-details p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  line-height: 1.5;
+}
+
+.network-modal-footer {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-check-connection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: white;
+  border: 1px solid #dfe6e9;
+  border-radius: 8px;
+  color: #2c3e50;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-check-connection:hover:not(:disabled) {
+  background-color: #f1f2f6;
+  border-color: #bdc3c7;
+}
+
+.btn-check-connection:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
 }
 
 /* Notification & Actions */

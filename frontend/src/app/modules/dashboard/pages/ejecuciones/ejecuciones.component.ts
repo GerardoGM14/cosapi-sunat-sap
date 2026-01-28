@@ -17,7 +17,7 @@ export class EjecucionesComponent implements OnInit {
       totalEjecuciones: 10,
       listaBlanca: 6,
       listaBlancaTotal: 10,
-      estado: 'Ejecutando',
+      estado: 'Ejecutar',
       activas: [
         { 
           nombre: 'Sincronización Nocturna SAP', 
@@ -77,7 +77,7 @@ export class EjecucionesComponent implements OnInit {
       totalEjecuciones: 12,
       listaBlanca: 10,
       listaBlancaTotal: 12,
-      estado: 'Ejecutando',
+      estado: 'Ejecutar',
       activas: [],
       historial: [
         { fecha: '19/01/2026 • 15:30', nombre: 'Auditoría Interna', tipo: 'Manual', detalle: 'Solicitado por Gerencia' }
@@ -91,7 +91,7 @@ export class EjecucionesComponent implements OnInit {
       totalEjecuciones: 5,
       listaBlanca: 5,
       listaBlancaTotal: 5,
-      estado: 'Ejecutando',
+      estado: 'Ejecutar',
       activas: [
         { nombre: 'Actualización de Inventario', tipo: 'Programación', detalle: 'Semanal', progreso: 12 }
       ],
@@ -128,7 +128,7 @@ export class EjecucionesComponent implements OnInit {
 
   getStatusClass(estado: string): string {
     switch (estado) {
-      case 'Ejecutando': return 'status-running';
+      case 'Ejecutar': return 'status-running';
       case 'Procesando': return 'status-processing';
       default: return '';
     }

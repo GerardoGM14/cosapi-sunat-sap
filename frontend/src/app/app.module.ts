@@ -1,6 +1,7 @@
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -16,6 +17,7 @@ import { UsuariosComponent } from './modules/dashboard/pages/usuarios/usuarios.c
 import { ProveedoresComponent } from './modules/dashboard/pages/proveedores/proveedores.component';
 import { NavbarComponent } from './modules/dashboard/components/navbar/navbar.component';
 import { AppConfigService } from './services/app-config.service';
+import { NetworkInterceptor } from './interceptors/network.interceptor';
 
 export function initializeApp(appConfig: AppConfigService) {
   return () => appConfig.loadConfig();
@@ -37,6 +39,7 @@ export function initializeApp(appConfig: AppConfigService) {
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     AppRoutingModule,
     HttpClientModule,
     FormsModule
@@ -46,6 +49,11 @@ export function initializeApp(appConfig: AppConfigService) {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
       deps: [AppConfigService],
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: NetworkInterceptor,
       multi: true
     }
   ],

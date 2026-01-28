@@ -55,12 +55,34 @@ export class SociedadesComponent implements OnInit {
   isModalOpen: boolean = false;
   showModalClave: boolean = false;
   
+  // Mock Providers for selection
+  proveedorSearchTerm: string = '';
+  availableProveedores = [
+    { id: 1, ruc: '123456789', razonSocial: 'PROVEEDORES LOGISTICOS PERU S.A.' },
+    { id: 2, ruc: '987654321', razonSocial: 'SERVICIOS GENERALES S.A.C.' },
+    { id: 3, ruc: '456123789', razonSocial: 'IMPORTACIONES Y EXPORTACIONES E.I.R.L.' },
+    { id: 4, ruc: '789123456', razonSocial: 'COMERCIALIZADORA DEL SUR S.A.' },
+    { id: 5, ruc: '321654987', razonSocial: 'DISTRIBUIDORA NORTE S.A.C.' }
+  ];
+
+  get filteredProveedores() {
+    if (!this.proveedorSearchTerm) {
+      return this.availableProveedores;
+    }
+    const term = this.proveedorSearchTerm.toLowerCase();
+    return this.availableProveedores.filter(p => 
+      p.razonSocial.toLowerCase().includes(term) || 
+      p.ruc.includes(term)
+    );
+  }
+
   newProgramacion = {
     ruc: '',
     razonSocial: '',
     usuarioSunat: '',
     claveSol: '',
-    estado: true
+    estado: true,
+    proveedores: [] as number[] // Store IDs of selected providers
   };
 
   constructor() { }
@@ -71,12 +93,14 @@ export class SociedadesComponent implements OnInit {
   openModal(): void {
     this.isModalOpen = true;
     // Reset or initialize new entry
+    this.proveedorSearchTerm = '';
     this.newProgramacion = {
       ruc: '',
       razonSocial: '',
       usuarioSunat: '',
       claveSol: '',
-      estado: true
+      estado: true,
+      proveedores: []
     };
     this.showModalClave = false;
   }
@@ -91,6 +115,15 @@ export class SociedadesComponent implements OnInit {
   
   toggleModalClave(): void {
     this.showModalClave = !this.showModalClave;
+  }
+
+  toggleProveedorSelection(id: number): void {
+    const index = this.newProgramacion.proveedores.indexOf(id);
+    if (index === -1) {
+      this.newProgramacion.proveedores.push(id);
+    } else {
+      this.newProgramacion.proveedores.splice(index, 1);
+    }
   }
 
   saveProgramacion(): void {

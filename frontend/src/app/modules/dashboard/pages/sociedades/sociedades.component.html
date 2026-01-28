@@ -144,6 +144,25 @@
           </div>
         </div>
       </div>
+
+      <!-- Vincular Proveedores Section -->
+      <h3 class="section-title" style="margin-top: 1.5rem;">Vincular Proveedores</h3>
+      <div class="proveedores-search-wrapper">
+        <svg class="search-icon-small" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" [(ngModel)]="proveedorSearchTerm" class="form-control search-proveedores" placeholder="Buscar por RUC o Razón Social...">
+      </div>
+      <div class="proveedores-list-container">
+        <div class="proveedor-item" *ngFor="let prov of filteredProveedores">
+          <label class="checkbox-container">
+            <input type="checkbox" [checked]="newProgramacion.proveedores.includes(prov.id)" (change)="toggleProveedorSelection(prov.id)">
+            <span class="checkmark"></span>
+            <div class="proveedor-info">
+              <span class="proveedor-razon">{{ prov.razonSocial }}</span>
+              <span class="proveedor-ruc">{{ prov.ruc }}</span>
+            </div>
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="modal-footer">
