@@ -6,6 +6,8 @@ import { DashboardComponent } from './modules/dashboard/dashboard.component';
 import { DashboardHomeComponent } from './modules/dashboard/pages/home/home.component';
 import { EjecucionesComponent } from './modules/dashboard/pages/ejecuciones/ejecuciones.component';
 import { ProgramacionComponent } from './modules/dashboard/pages/programacion/programacion.component';
+import { SociedadesComponent } from './modules/dashboard/pages/sociedades/sociedades.component';
+import { UsuariosComponent } from './modules/dashboard/pages/usuarios/usuarios.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -15,6 +17,8 @@ const routes: Routes = [
     children: [
       { path: 'ejecuciones', component: EjecucionesComponent },
       { path: 'programacion', component: ProgramacionComponent },
+      { path: 'maestros/sociedades', component: SociedadesComponent },
+      { path: 'maestros/usuarios', component: UsuariosComponent },
       { path: 'config', component: ConfigComponent },
       { path: '', redirectTo: 'ejecuciones', pathMatch: 'full' }
     ]

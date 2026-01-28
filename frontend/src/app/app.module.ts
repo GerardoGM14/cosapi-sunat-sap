@@ -11,6 +11,8 @@ import { DashboardComponent } from './modules/dashboard/dashboard.component';
 import { DashboardHomeComponent } from './modules/dashboard/pages/home/home.component';
 import { EjecucionesComponent } from './modules/dashboard/pages/ejecuciones/ejecuciones.component';
 import { ProgramacionComponent } from './modules/dashboard/pages/programacion/programacion.component';
+import { SociedadesComponent } from './modules/dashboard/pages/sociedades/sociedades.component';
+import { UsuariosComponent } from './modules/dashboard/pages/usuarios/usuarios.component';
 import { NavbarComponent } from './modules/dashboard/components/navbar/navbar.component';
 import { AppConfigService } from './services/app-config.service';
 
@@ -27,6 +29,8 @@ export function initializeApp(appConfig: AppConfigService) {
     DashboardHomeComponent,
     EjecucionesComponent,
     ProgramacionComponent,
+    SociedadesComponent,
+    UsuariosComponent,
     NavbarComponent
   ],
   imports: [

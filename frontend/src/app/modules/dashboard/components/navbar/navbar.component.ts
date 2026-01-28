@@ -9,7 +9,8 @@ import { filter } from 'rxjs/operators';
 })
 export class NavbarComponent implements OnInit {
   @Output() toggleSidebar = new EventEmitter<void>();
-  pageTitle = 'Ejecuciones';
+  breadcrumbItems: { label: string; active: boolean }[] = [];
+  showHomeIcon = true;
 
   constructor(private router: Router) {}
 
@@ -17,22 +18,47 @@ export class NavbarComponent implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      this.updateTitle(event.url);
+      this.updateBreadcrumbs(event.url);
     });
     
     // Set initial title
-    this.updateTitle(this.router.url);
+    this.updateBreadcrumbs(this.router.url);
   }
 
-  updateTitle(url: string) {
+  updateBreadcrumbs(url: string) {
     if (url.includes('config')) {
-      this.pageTitle = 'Configuración';
+      this.breadcrumbItems = [
+        { label: 'Home', active: false },
+        { label: 'Configuración', active: true }
+      ];
+      this.showHomeIcon = true;
     } else if (url.includes('ejecuciones')) {
-      this.pageTitle = 'Ejecuciones';
+      this.breadcrumbItems = [
+        { label: 'Home', active: false },
+        { label: 'Ejecuciones', active: true }
+      ];
+      this.showHomeIcon = true;
     } else if (url.includes('programacion')) {
-      this.pageTitle = 'Programación';
+      this.breadcrumbItems = [
+        { label: 'Home', active: false },
+        { label: 'Programación', active: true }
+      ];
+      this.showHomeIcon = true;
+    } else if (url.includes('maestros/sociedades') || url.includes('sociedades')) {
+      this.breadcrumbItems = [
+        { label: 'Maestros', active: false },
+        { label: 'Sociedades', active: true }
+      ];
+      this.showHomeIcon = true;
+    } else if (url.includes('maestros/usuarios') || url.includes('usuarios')) {
+      this.breadcrumbItems = [
+        { label: 'Maestros', active: false },
+        { label: 'Usuarios', active: true }
+      ];
+      this.showHomeIcon = true;
     } else {
-      this.pageTitle = '';
+      this.breadcrumbItems = [];
+      this.showHomeIcon = true;
     }
   }
 

@@ -80,7 +80,7 @@ export class ProgramacionComponent implements OnInit {
   // Time Picker Logic
   isTimePickerOpen: boolean = false;
   hours: string[] = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-  minutes: string[] = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+  minutes: string[] = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
   selectedHour: string = '00';
   selectedMinute: string = '00';
 
@@ -136,7 +136,8 @@ export class ProgramacionComponent implements OnInit {
     } else {
       const now = new Date();
       this.selectedHour = now.getHours().toString().padStart(2, '0');
-      this.selectedMinute = now.getMinutes().toString().padStart(2, '0');
+      const roundedMinutes = Math.floor(now.getMinutes() / 5) * 5;
+      this.selectedMinute = roundedMinutes.toString().padStart(2, '0');
       this.updateTime();
     }
   }
