@@ -86,7 +86,7 @@
   align-items: center;
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  font-family: 'KoHo', sans-serif;
+  font-family: 'Roboto', sans-serif;
   padding: 20px;
   line-height: 1.5; /* Interlineado general reducido */
 }

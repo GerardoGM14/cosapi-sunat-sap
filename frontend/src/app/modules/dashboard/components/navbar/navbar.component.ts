@@ -29,6 +29,8 @@ export class NavbarComponent implements OnInit {
       this.pageTitle = 'Configuración';
     } else if (url.includes('ejecuciones')) {
       this.pageTitle = 'Ejecuciones';
+    } else if (url.includes('programacion')) {
+      this.pageTitle = 'Programación';
     } else {
       this.pageTitle = '';
     }

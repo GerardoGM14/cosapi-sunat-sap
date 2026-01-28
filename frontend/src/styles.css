@@ -7,13 +7,13 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-  background-color: #f5f7fa;
+  background-color: #ffffff;
   color: #333;
 }
 
 /* Standard Page Header */
 .page-header {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .page-title {

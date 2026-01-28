@@ -20,8 +20,8 @@ export class DashboardComponent implements OnInit {
     this.userEmail = this.username.includes('@') ? this.username : `${this.username.toLowerCase().replace(/\s+/g, '.')}@cosapi.com`;
     
     // Generar avatar aleatorio pero consistente basado en el nombre de usuario
-    // Usamos DiceBear 'avataaars' para un estilo profesional y amigable
-    this.avatarUrl = `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(this.username)}`;
+    // Usamos DiceBear 'notionists-neutral' para un diseño diferente
+    this.avatarUrl = `https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${encodeURIComponent(this.username)}`;
   }
 
   ngOnInit() {

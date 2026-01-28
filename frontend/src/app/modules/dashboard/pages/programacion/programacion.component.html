@@ -1,0 +1,209 @@
+<div class="page-container">
+  <!-- Title Section -->
+  <div class="page-header-flex">
+    <div class="header-text">
+      <h1 class="page-title">Programación</h1>
+      <p class="page-subtitle">Procesos automáticos por grupo.</p>
+    </div>
+    <button class="btn-new-programacion" (click)="openModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      Nueva Programación
+    </button>
+  </div>
+
+  <!-- Filters Toolbar -->
+  <div class="table-toolbar">
+    <div class="search-input-wrapper">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" placeholder="Buscar en toda la tabla ..." (input)="onSearch($event)">
+    </div>
+    
+    <div class="filter-wrapper">
+      <span class="filter-label">Estado</span>
+      <select class="filter-select" (change)="onStatusChange($event)">
+        <option value="TODOS">TODOS</option>
+        <option value="ACTIVO">ACTIVO</option>
+        <option value="INACTIVO">INACTIVO</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th>Nombre de la programación</th>
+          <th style="width: 150px;">Hora de ejecución</th>
+          <th>Días</th>
+          <th style="width: 180px;">Sociedades Incluidas</th>
+          <th style="width: 120px; text-align: center;">Estado</th>
+          <th style="width: 60px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of filteredProgramaciones; let i = index">
+          <td class="text-center">{{ item.id }}</td>
+          <td>
+            <div class="cell-primary-bold">{{ item.nombre }}</div>
+          </td>
+          <td class="cell-value">{{ item.hora }}</td>
+          <td>
+            <div class="days-container">
+              <span class="day-badge" *ngFor="let dia of item.dias">{{ dia }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="societies-cell">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              {{ item.sociedades }} sociedades
+            </div>
+          </td>
+          <td class="text-center">
+            <div class="toggle-switch" [class.active]="item.estado" (click)="toggleStatus(item)">
+              <div class="toggle-knob"></div>
+            </div>
+          </td>
+          <td class="text-center">
+            <button class="btn-icon-eye">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#57606f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-footer">
+    <span class="pagination-info">Mostrando 1 – {{ filteredProgramaciones.length }} de {{ filteredProgramaciones.length }} resultados</span>
+    <div class="pagination-controls">
+      <button class="page-btn disabled">&lt;</button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn disabled">&gt;</button>
+    </div>
+    <div class="rows-per-page">
+      <span>Filas por página</span>
+      <select>
+        <option>10</option>
+        <option>20</option>
+        <option>50</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nueva Programación -->
+<div class="modal-overlay" *ngIf="isModalOpen">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-title-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+        <h2>Nueva Programación</h2>
+      </div>
+      <button class="btn-close-modal" (click)="closeModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Nombre y Hora -->
+      <div class="form-row">
+        <div class="form-group col-name">
+          <label>Nombre de la programación</label>
+          <input type="text" [(ngModel)]="newProgramacion.nombre" class="form-control">
+        </div>
+        <div class="form-group col-time">
+          <label>Hora de ejecución</label>
+          <div class="custom-select-wrapper">
+            <div *ngIf="isTimePickerOpen" class="dropdown-backdrop" (click)="toggleTimePicker()"></div>
+            <div class="custom-select-container" [class.open]="isTimePickerOpen">
+              <div class="custom-select-header" (click)="toggleTimePicker()">
+                <span>{{ selectedHour }}:{{ selectedMinute }}</span>
+                <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div class="custom-select-body" [class.visible]="isTimePickerOpen" (click)="$event.stopPropagation()">
+                <div class="time-selector">
+                  <div class="time-column">
+                    <div *ngFor="let h of hours" 
+                         class="time-item" 
+                         [class.selected]="h === selectedHour"
+                         (click)="selectHour(h)">
+                      {{ h }}
+                    </div>
+                  </div>
+                  <div class="time-separator">:</div>
+                  <div class="time-column">
+                    <div *ngFor="let m of minutes" 
+                         class="time-item" 
+                         [class.selected]="m === selectedMinute"
+                         (click)="selectMinute(m)">
+                      {{ m }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Días de Repetición -->
+      <div class="form-group">
+        <label>Días de Repetición</label>
+        <div class="days-selector">
+          <button *ngFor="let dia of newProgramacion.dias; let i = index" 
+                  class="day-btn" 
+                  [class.selected]="dia.selected"
+                  (click)="toggleDay(i)">
+            {{ dia.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Sociedades a incluir -->
+      <div class="form-group societies-section">
+        <div class="societies-header">
+          <ng-container *ngIf="!showSocietySearch">
+            <label>Sociedades a incluir <span class="count">({{ getSelectedSocietiesCount() }})</span></label>
+            <button class="btn-search-societies" (click)="toggleSocietySearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+          </ng-container>
+          <div *ngIf="showSocietySearch" class="society-search-wrapper">
+            <input type="text" [(ngModel)]="societySearchTerm" placeholder="Buscar..." class="society-search-input">
+            <button class="btn-close-search" (click)="toggleSocietySearch()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="societies-list">
+          <div class="society-item" *ngFor="let soc of filteredSocieties">
+            <div class="checkbox-wrapper" (click)="toggleSociety(soc)">
+              <div class="custom-checkbox" [class.checked]="soc.selected">
+                <svg *ngIf="soc.selected" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            </div>
+            <div class="society-info">
+              <div class="society-name">{{ soc.name }}</div>
+              <div class="society-id">{{ soc.id }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        Cancelar
+      </button>
+      <button class="btn-save" (click)="saveProgramacion()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Guardar Programación
+      </button>
+    </div>
+  </div>
+</div>

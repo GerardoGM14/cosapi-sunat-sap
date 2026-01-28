@@ -1,14 +1,14 @@
 /* Global Layout & Fonts */
 :host {
   display: block;
-  font-family: 'KoHo', sans-serif;
-  --sidebar-bg: #0b4f6c; /* Dark Teal */
+  font-family: 'Roboto', sans-serif;
+  --sidebar-bg: #0F5877; /* Updated Sidebar Color */
   --sidebar-text: #ffffff;
   --sidebar-hover-bg: rgba(255, 255, 255, 0.1);
   --sidebar-active-bg: rgba(255, 255, 255, 0.15);
-  --primary-color: #0b4f6c; /* Matching Theme */
+  --primary-color: #0F5877; /* Matching Theme */
   --secondary-color: #2c3e50;
-  --bg-color: #f5f7fa;
+  --bg-color: #ffffff;
   --text-color: #34495e;
   --border-color: #e0e0e0;
   --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);

@@ -5,6 +5,7 @@ import { ConfigComponent } from './modules/auth/config/config.component';
 import { DashboardComponent } from './modules/dashboard/dashboard.component';
 import { DashboardHomeComponent } from './modules/dashboard/pages/home/home.component';
 import { EjecucionesComponent } from './modules/dashboard/pages/ejecuciones/ejecuciones.component';
+import { ProgramacionComponent } from './modules/dashboard/pages/programacion/programacion.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -13,6 +14,7 @@ const routes: Routes = [
     component: DashboardComponent,
     children: [
       { path: 'ejecuciones', component: EjecucionesComponent },
+      { path: 'programacion', component: ProgramacionComponent },
       { path: 'config', component: ConfigComponent },
       { path: '', redirectTo: 'ejecuciones', pathMatch: 'full' }
     ]
