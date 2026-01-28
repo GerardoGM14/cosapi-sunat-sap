@@ -13,6 +13,7 @@ import { EjecucionesComponent } from './modules/dashboard/pages/ejecuciones/ejec
 import { ProgramacionComponent } from './modules/dashboard/pages/programacion/programacion.component';
 import { SociedadesComponent } from './modules/dashboard/pages/sociedades/sociedades.component';
 import { UsuariosComponent } from './modules/dashboard/pages/usuarios/usuarios.component';
+import { ProveedoresComponent } from './modules/dashboard/pages/proveedores/proveedores.component';
 import { NavbarComponent } from './modules/dashboard/components/navbar/navbar.component';
 import { AppConfigService } from './services/app-config.service';
 
@@ -31,6 +32,7 @@ export function initializeApp(appConfig: AppConfigService) {
     ProgramacionComponent,
     SociedadesComponent,
     UsuariosComponent,
+    ProveedoresComponent,
     NavbarComponent
   ],
   imports: [

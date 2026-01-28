@@ -56,6 +56,12 @@ export class NavbarComponent implements OnInit {
         { label: 'Usuarios', active: true }
       ];
       this.showHomeIcon = true;
+    } else if (url.includes('maestros/proveedores') || url.includes('proveedores')) {
+      this.breadcrumbItems = [
+        { label: 'Maestros', active: false },
+        { label: 'Proveedores', active: true }
+      ];
+      this.showHomeIcon = true;
     } else {
       this.breadcrumbItems = [];
       this.showHomeIcon = true;
