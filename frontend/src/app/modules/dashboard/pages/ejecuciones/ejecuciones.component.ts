@@ -168,5 +168,24 @@ export class EjecucionesComponent implements OnInit {
     this.isLogModalOpen = false;
     this.selectedLogTask = null;
   }
+
+  // Whitelist Modal Logic
+  isWhitelistModalOpen = false;
+  globalWhitelist = [
+    { ruc: '20100123456', razonSocial: 'PROVEEDOR EJEMPLO 1 S.A.C.' },
+    { ruc: '20200123457', razonSocial: 'PROVEEDOR EJEMPLO 2 S.R.L.' },
+    { ruc: '20300123458', razonSocial: 'PROVEEDOR EJEMPLO 3 E.I.R.L.' },
+    { ruc: '20400123459', razonSocial: 'PROVEEDOR EJEMPLO 4 S.A.' },
+    { ruc: '20500123460', razonSocial: 'PROVEEDOR EJEMPLO 5 S.A.C.' },
+    { ruc: '20600123461', razonSocial: 'PROVEEDOR EJEMPLO 6 S.A.A.' }
+  ];
+
+  openWhitelistModal(): void {
+    this.isWhitelistModalOpen = true;
+  }
+
+  closeWhitelistModal(): void {
+    this.isWhitelistModalOpen = false;
+  }
 }
 

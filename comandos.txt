@@ -11,7 +11,7 @@ Directorio: `backend/`
    pip install -r requirements.txt
 
 3. Ejecutar servidor de desarrollo:
-   uvicorn app.main:app --reload
+   uvicorn app.main:app --reload --port 8001
 
    El servidor estará disponible en: http://localhost:8001
    Documentación API (Swagger): http://localhost:8001/docs
@@ -28,6 +28,20 @@ Directorio: `frontend/`
    ng serve
 
    La aplicación estará disponible en: http://localhost:4200
+
+## Servicio SAP/SUNAT (Python Automation)
+Directorio: `sunat-sap-service/`
+
+1. Crear entorno virtual (opcional pero recomendado):
+   python -m venv .venv
+   .\.venv\Scripts\activate
+
+2. Instalar dependencias:
+   pip install .
+   playwright install
+
+3. Ejecutar servicio:
+   python app.py
 
 ## Credenciales (Desarrollo)
 Usuario: admin
