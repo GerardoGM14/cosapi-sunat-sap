@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { SociedadService } from '../../../../services/sociedad.service';
 
 @Component({
   selector: 'app-sociedades',
@@ -7,100 +8,82 @@ import { Component, OnInit } from '@angular/core';
 })
 export class SociedadesComponent implements OnInit {
   
-  // Dummy data adapted for Sociedades
-  programaciones = [
-    {
-      id: 1,
-      ruc: '20100017491',
-      razonSocial: 'SERVICIOS LOGISTICOS PERU S.A.',
-      usuarioSunat: 'MODDATOS',
-      claveSol: 'moddatos',
-      showClave: false,
-      estado: true
-    },
-    {
-      id: 2,
-      ruc: '20100017492',
-      razonSocial: 'COSAPI MINERIA S.A.C.',
-      usuarioSunat: 'MODDATOS',
-      claveSol: 'moddatos',
-      showClave: false,
-      estado: true
-    },
-    {
-      id: 3,
-      ruc: '20100017493',
-      razonSocial: 'COSAPI INMOBILIARIA Y GRUPO',
-      usuarioSunat: 'MODDATOS',
-      claveSol: 'moddatos',
-      showClave: false,
-      estado: false
-    },
-    {
-      id: 4,
-      ruc: '20100017494',
-      razonSocial: 'COSAPI DATA S.A.',
-      usuarioSunat: 'MODDATOS',
-      claveSol: 'moddatos',
-      showClave: false,
-      estado: true
-    }
-  ];
-
-  filteredProgramaciones = [...this.programaciones];
+  programaciones: any[] = [];
+  filteredProgramaciones: any[] = [];
   searchTerm: string = '';
   selectedStatus: string = 'TODOS';
 
   // Modal Logic
   isModalOpen: boolean = false;
   showModalClave: boolean = false;
-  
-  // Mock Providers for selection
-  proveedorSearchTerm: string = '';
-  availableProveedores = [
-    { id: 1, ruc: '123456789', razonSocial: 'PROVEEDORES LOGISTICOS PERU S.A.' },
-    { id: 2, ruc: '987654321', razonSocial: 'SERVICIOS GENERALES S.A.C.' },
-    { id: 3, ruc: '456123789', razonSocial: 'IMPORTACIONES Y EXPORTACIONES E.I.R.L.' },
-    { id: 4, ruc: '789123456', razonSocial: 'COMERCIALIZADORA DEL SUR S.A.' },
-    { id: 5, ruc: '321654987', razonSocial: 'DISTRIBUIDORA NORTE S.A.C.' }
-  ];
+  isEditMode: boolean = false; // Track if we are editing
+  currentRucToEdit: string = ''; // Store the original RUC for updates
 
-  get filteredProveedores() {
-    if (!this.proveedorSearchTerm) {
-      return this.availableProveedores;
-    }
-    const term = this.proveedorSearchTerm.toLowerCase();
-    return this.availableProveedores.filter(p => 
-      p.razonSocial.toLowerCase().includes(term) || 
-      p.ruc.includes(term)
-    );
-  }
+  // Delete Modal Logic
+  isDeleteModalOpen: boolean = false;
+  itemToDelete: any = null;
+
+  // Toast Logic
+  errorMessage: string = '';
+  successMessage: string = '';
 
   newProgramacion = {
     ruc: '',
     razonSocial: '',
     usuarioSunat: '',
     claveSol: '',
-    estado: true,
-    proveedores: [] as number[] // Store IDs of selected providers
+    estado: true
   };
 
-  constructor() { }
+  constructor(private sociedadService: SociedadService) { }
 
   ngOnInit(): void {
+    this.loadSociedades();
+  }
+
+  loadSociedades(): void {
+    this.sociedadService.getAll().subscribe({
+      next: (data) => {
+        this.programaciones = data.map(item => ({
+          id: item.tRuc, // Use RUC as ID
+          ruc: item.tRuc,
+          razonSocial: item.tRazonSocial,
+          usuarioSunat: item.tUsuario,
+          claveSol: item.tClave,
+          estado: item.lActivo,
+          showClave: false
+        }));
+        this.filterData();
+      },
+      error: (err) => console.error('Error loading sociedades:', err)
+    });
   }
 
   openModal(): void {
+    this.isEditMode = false;
     this.isModalOpen = true;
-    // Reset or initialize new entry
-    this.proveedorSearchTerm = '';
     this.newProgramacion = {
       ruc: '',
       razonSocial: '',
       usuarioSunat: '',
       claveSol: '',
-      estado: true,
-      proveedores: []
+      estado: true
+    };
+    this.showModalClave = false;
+  }
+
+  openEditModal(item: any): void {
+    this.isEditMode = true;
+    this.isModalOpen = true;
+    this.currentRucToEdit = item.ruc;
+    
+    // Clone data to avoid direct mutation of table row before saving
+    this.newProgramacion = {
+      ruc: item.ruc,
+      razonSocial: item.razonSocial,
+      usuarioSunat: item.usuarioSunat,
+      claveSol: item.claveSol,
+      estado: item.estado
     };
     this.showModalClave = false;
   }
@@ -117,18 +100,88 @@ export class SociedadesComponent implements OnInit {
     this.showModalClave = !this.showModalClave;
   }
 
-  toggleProveedorSelection(id: number): void {
-    const index = this.newProgramacion.proveedores.indexOf(id);
-    if (index === -1) {
-      this.newProgramacion.proveedores.push(id);
-    } else {
-      this.newProgramacion.proveedores.splice(index, 1);
+  validateRucInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    
+    // Remove non-numeric characters
+    const numericValue = value.replace(/[^0-9]/g, '');
+    
+    if (value !== numericValue) {
+      this.newProgramacion.ruc = numericValue;
+      input.value = numericValue;
+    }
+    
+    // Truncate to 11 characters if somehow exceeded (though maxlength handles this)
+    if (this.newProgramacion.ruc.length > 11) {
+      this.newProgramacion.ruc = this.newProgramacion.ruc.slice(0, 11);
     }
   }
 
+  isValidForm(): boolean {
+    // Check for empty fields
+    if (!this.newProgramacion.ruc || 
+        !this.newProgramacion.razonSocial || 
+        !this.newProgramacion.usuarioSunat || 
+        !this.newProgramacion.claveSol) {
+      this.showError('Todos los campos son obligatorios.');
+      return false;
+    }
+
+    // Check RUC length
+    if (this.newProgramacion.ruc.length !== 11) {
+      this.showError('El RUC debe tener exactamente 11 dígitos.');
+      return false;
+    }
+
+    return true;
+  }
+
   saveProgramacion(): void {
+    if (!this.isValidForm()) {
+      return;
+    }
+
     console.log('Guardando sociedad...', this.newProgramacion);
-    this.closeModal();
+    
+    // Map to backend format
+    const payload = {
+      tRuc: this.newProgramacion.ruc,
+      tRazonSocial: this.newProgramacion.razonSocial,
+      tUsuario: this.newProgramacion.usuarioSunat,
+      tClave: this.newProgramacion.claveSol,
+      lActivo: this.newProgramacion.estado
+    };
+
+    if (this.isEditMode) {
+      // Update existing record
+      this.sociedadService.update(this.currentRucToEdit, payload).subscribe({
+        next: (res) => {
+          console.log('Sociedad actualizada:', res);
+          this.showSuccess('Sociedad actualizada correctamente.');
+          this.loadSociedades(); // Refresh list
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error('Error updating sociedad:', err);
+          this.showError('Error al actualizar: ' + (err.error?.detail || err.message));
+        }
+      });
+    } else {
+      // Create new record
+      this.sociedadService.create(payload).subscribe({
+        next: (res) => {
+          console.log('Sociedad creada:', res);
+          this.showSuccess('Sociedad creada correctamente.');
+          this.loadSociedades(); // Refresh list
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error('Error creating sociedad:', err);
+          this.showError('Error al guardar: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
   }
 
   filterData(): void {
@@ -158,7 +211,68 @@ export class SociedadesComponent implements OnInit {
   }
 
   toggleStatus(item: any): void {
-    item.estado = !item.estado;
-    console.log(`Status toggled for ${item.razonSocial}: ${item.estado}`);
+    // Toggle locally first for UI responsiveness (optional, but better to wait for server)
+    // Here we'll call server
+    const newState = !item.estado;
+    const payload = { lActivo: newState };
+
+    this.sociedadService.update(item.ruc, payload).subscribe({
+      next: (res) => {
+        item.estado = newState;
+        console.log(`Status updated for ${item.razonSocial}: ${item.estado}`);
+      },
+      error: (err) => {
+        console.error('Error updating status:', err);
+        // Revert if failed
+        // item.estado = !newState; 
+      }
+    });
+  }
+
+  openDeleteModal(item: any): void {
+    this.itemToDelete = item;
+    this.isDeleteModalOpen = true;
+  }
+
+  closeDeleteModal(): void {
+    this.isDeleteModalOpen = false;
+    this.itemToDelete = null;
+  }
+
+  confirmDelete(): void {
+    if (!this.itemToDelete) return;
+
+    this.sociedadService.delete(this.itemToDelete.ruc).subscribe({
+      next: (res) => {
+        console.log('Sociedad eliminada:', res);
+        this.showSuccess('Sociedad eliminada correctamente.');
+        this.loadSociedades(); // Refresh list
+        this.closeDeleteModal();
+      },
+      error: (err) => {
+        console.error('Error deleting sociedad:', err);
+        this.showError('Error al eliminar: ' + (err.error?.detail || err.message));
+        this.closeDeleteModal();
+      }
+    });
+  }
+
+  showError(message: string) {
+    this.successMessage = '';
+    this.errorMessage = message;
+    this.triggerToastTimeout();
+  }
+
+  showSuccess(message: string) {
+    this.errorMessage = '';
+    this.successMessage = message;
+    this.triggerToastTimeout();
+  }
+
+  triggerToastTimeout() {
+    setTimeout(() => {
+      this.errorMessage = '';
+      this.successMessage = '';
+    }, 4000);
   }
 }
