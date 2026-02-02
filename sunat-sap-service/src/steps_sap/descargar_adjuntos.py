@@ -7,8 +7,6 @@ from src.steps_sap.descargara_por_fila import process_modal_downloads_one_by_one
 
 logger = ColoredLogger()
 
-# //div[@role="heading"]//span[contains(text(), "No se han encontrado")]
-
 
 async def descargar_adjuntos(frame: FrameLocator, page: Page, folder: str) -> IReturn:
     try:

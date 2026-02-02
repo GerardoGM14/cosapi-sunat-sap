@@ -14,3 +14,4 @@ class ConfigEnv:
     USER_SUNAT = os.getenv('USER_SUNAT')
     PASSWORD_SUNAT = os.getenv('PASSWORD_SUNAT')
     CONFIG_METHOD = os.getenv('CONFIG_METHOD')
+    SOCKET_URL = os.getenv('SOCKET_URL')

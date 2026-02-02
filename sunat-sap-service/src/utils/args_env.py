@@ -40,14 +40,6 @@ def get_args_env() -> IArgs:
                 'user': ConfigEnv.USER_SUNAT,
                 'clave': ConfigEnv.PASSWORD_SUNAT
             }
-        }
+        },
+        'socket_url': ConfigEnv.SOCKET_URL
     }
-
-
-if __name__ == '__main__':    
-    try:
-        args = get_args_env()
-        print(args)
-    except (ValueError, TypeError) as e:
-        print(f"Error: {e}")
-        print("Asegúrate de que el archivo .env exista y contenga todas las variables requeridas.")

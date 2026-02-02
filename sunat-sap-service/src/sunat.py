@@ -1,15 +1,22 @@
 import asyncio
 from playwright.async_api import async_playwright
 from src.logger.colored_logger import ColoredLogger, Colors
+from src.utils.date_current import dateCurrent
 from src.schemas.IConfig import ISunat
 from src.bot_manager import BotSunat
 from src.schemas.IReturn import IReturn
+from src.socket_client.manager import socket_manager as io
+from src.schemas.ISocket import EmitEvent
 
 logger = ColoredLogger()
 
 
 async def appSunat(args: ISunat) -> IReturn:
     intento = 3
+    io.emit(
+        event=EmitEvent.SUNAT,
+        data={'message': f'🚀 Iniciando proceso de descarga de reporte contabilidad SUNAT', 'date': dateCurrent()}
+    )
     for i in range(intento):
         try:
             async with async_playwright() as p:
@@ -31,42 +38,118 @@ async def appSunat(args: ISunat) -> IReturn:
                 login = await bot.login_sunat()
                 if not login['success']:
                     if login['error_system']:
+                        io.emit(
+                            event=EmitEvent.SUNAT,
+                            data={'message': login['message'], 'date': dateCurrent()}
+                        )
                         continue
+                    io.emit(
+                        event=EmitEvent.SUNAT,
+                        data={'message': login['message'], 'date': dateCurrent()}
+                    )
                     return {'success': False, 'error_system': False, 'message': login['message']}
+                io.emit(
+                    event=EmitEvent.SUNAT,
+                    data={'message': login['message'], 'date': dateCurrent()}
+                )
                 
                 no_auth = await bot.no_auth()
                 if not no_auth['success']:
+                    io.emit(
+                        event=EmitEvent.SUNAT,
+                        data={'message': no_auth['message'], 'date': dateCurrent()}
+                    )
                     return {'success': False, 'error_system': False, 'message': no_auth['message']}
+                io.emit(
+                    event=EmitEvent.SUNAT,
+                    data={'message': no_auth['message'], 'date': dateCurrent()}
+                )
                 
                 cerrar_modales_iniciales = await bot.cerrar_modales_iniciales()
                 if not cerrar_modales_iniciales['success']:
+                    io.emit(
+                        event=EmitEvent.SUNAT,
+                        data={'message': cerrar_modales_iniciales['message'], 'date': dateCurrent()}
+                    )
                     continue
+                io.emit(
+                    event=EmitEvent.SUNAT,
+                    data={'message': cerrar_modales_iniciales['message'], 'date': dateCurrent()}
+                )
                 
                 entrar_al_menu_validaciones = await bot.entrar_al_menu_validaciones()
                 if not entrar_al_menu_validaciones['success']:
+                    io.emit(
+                        event=EmitEvent.SUNAT,
+                        data={'message': entrar_al_menu_validaciones['message'], 'date': dateCurrent()}
+                    )
                     continue
-
+                io.emit(
+                    event=EmitEvent.SUNAT,
+                    data={'message': entrar_al_menu_validaciones['message'], 'date': dateCurrent()}
+                )
+                
                 await asyncio.sleep(1)
                 
                 seleccionar_periodos = await bot.seleccionar_periodos(frame=entrar_al_menu_validaciones['frame'])
 
                 if not seleccionar_periodos['success']:
                     if seleccionar_periodos['error_system']:
+                        io.emit(
+                            event=EmitEvent.SUNAT,
+                            data={'message': seleccionar_periodos['message'], 'date': dateCurrent()}
+                        )
                         continue
+                    io.emit(
+                        event=EmitEvent.SUNAT,
+                        data={'message': seleccionar_periodos['message'], 'date': dateCurrent()}
+                    )
                     return {'success': False, 'error_system': False, 'message': seleccionar_periodos['message']}
-
+                io.emit(
+                    event=EmitEvent.SUNAT,
+                    data={'message': seleccionar_periodos['message'], 'date': dateCurrent()}
+                )
+                
                 await asyncio.sleep(1)
                 
                 obtener_datos = await bot.obtener_datos(frame=entrar_al_menu_validaciones['frame'])
  
                 if not obtener_datos['success']:
-                    continue
+                    if obtener_datos['error_system']:
+                        io.emit(
+                            event=EmitEvent.SUNAT,
+                            data={'message': obtener_datos['message'], 'date': dateCurrent()}
+                        )
+                        continue
+                    io.emit(
+                        event=EmitEvent.SUNAT,
+                        data={'message': obtener_datos['message'], 'date': dateCurrent()}
+                    )
+                    return {'success': False, 'error_system': False, 'message': obtener_datos['message']}
+                io.emit(
+                    event=EmitEvent.SUNAT,
+                    data={'message': obtener_datos['message'], 'date': dateCurrent()}
+                )
                 
                 procesar_pendientes = await bot.procesar_pendientes(frame=entrar_al_menu_validaciones['frame'])
 
                 if not procesar_pendientes['success']:
-                    continue
-
+                    if procesar_pendientes['error_system']:
+                        io.emit(
+                            event=EmitEvent.SUNAT,
+                            data={'message': procesar_pendientes['message'], 'date': dateCurrent()}
+                        )
+                        continue
+                    io.emit(
+                        event=EmitEvent.SUNAT,
+                        data={'message': procesar_pendientes['message'], 'date': dateCurrent()}
+                    )
+                    return {'success': False, 'error_system': False, 'message': procesar_pendientes['message']}
+                io.emit(
+                    event=EmitEvent.SUNAT,
+                    data={'message': procesar_pendientes['message'], 'date': dateCurrent()}
+                )
+                
                 return {
                     'success': True,
                     'error_system': False,
@@ -74,12 +157,21 @@ async def appSunat(args: ISunat) -> IReturn:
                 }
 
         except Exception as e:
-            logger.log(f"❌ Error en la iteración {i+1}: {e}", color=Colors.BRIGHT_RED)
+            msg = f"❌ Error en la iteración {i+1}: {e}"
+            io.emit(
+                event=EmitEvent.SUNAT,
+                data={'message': msg, 'date': dateCurrent()}
+            )
+            logger.log(msg, color=Colors.BRIGHT_RED)
             continue
         finally:
             await browser.close()
     else:
         msg = f'⚠️ Después de {intento} intentos no se pudo completar la operación'
+        io.emit(
+            event=EmitEvent.SUNAT,
+            data={'message': msg, 'date': dateCurrent()}
+        )
         logger.log(msg, color=Colors.YELLOW)
         return {
             'success': False,

@@ -14,7 +14,7 @@ def get_args() -> Optional[IArgs]:
         config_method = ConfigEnv.CONFIG_METHOD
 
         args: IArgs
-        if config_method == 'console':
+        if config_method and config_method.lower() == 'console':
             args = get_args_console()
         else:
             args = get_args_env()

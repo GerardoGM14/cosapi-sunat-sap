@@ -62,6 +62,14 @@ def get_args_console() -> IArgs:
         help="Contraseña para ingresar a la plataforma SAP"
     )
 
+    # ARGUMENTO OPTIONAL
+    parser.add_argument(
+        "--socket_url",
+        type=str,
+        default="ws://localhost:3000",
+        help="URL del socket para la conexión"
+    )
+
     month = int(parser.parse_args().date.split("/")[1])
     year = int(parser.parse_args().date.split("/")[2])
 
@@ -92,5 +100,6 @@ def get_args_console() -> IArgs:
                 'user': parser.parse_args().user_sunat,
                 'clave': parser.parse_args().password_sunat
             }
-        }
+        },
+        'socket_url': parser.parse_args().socket_url
     }
