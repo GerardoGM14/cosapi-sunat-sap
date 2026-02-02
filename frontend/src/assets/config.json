@@ -1,4 +1,4 @@
 {
   "apiUrl": "http://localhost:8001/api",
-  "_comment_ubuntu": "Para Ubuntu usar: '/api' o 'http://<IP>:8001/api'"
+  "_comment": "El sistema auto-detectará la IP si estás en un servidor remoto. Para usar proxy inverso (Nginx), cambia esto a '/api'."
 }

@@ -56,7 +56,14 @@ async def run_bot_logic(config: BotConfig):
         
         if not os.path.exists(script_path):
              # Fallback hardcoded por si acaso la estructura es muy distinta
-             script_path = r"c:\Users\Soporte\Documents\Proyectos\ocr-cosapi-full\sunat-sap-service\app.py"
+             if sys.platform == "win32":
+                script_path = r"c:\Users\Soporte\Documents\Proyectos\ocr-cosapi-full\sunat-sap-service\app.py"
+             else:
+                # Fallback común en Linux si se sigue la estructura estándar
+                script_path = os.path.join(os.getcwd(), "sunat-sap-service", "app.py")
+                if not os.path.exists(script_path):
+                     script_path = "/opt/ocr-cosapi-full/sunat-sap-service/app.py"
+
              service_dir = os.path.dirname(script_path)
 
         # Determinar el intérprete de Python a usar
@@ -66,7 +73,11 @@ async def run_bot_logic(config: BotConfig):
         
         python_executable = sys.executable
         
-        possible_service_venv = os.path.join(service_dir, ".venv", "Scripts", "python.exe")
+        if sys.platform == "win32":
+            possible_service_venv = os.path.join(service_dir, ".venv", "Scripts", "python.exe")
+        else:
+            possible_service_venv = os.path.join(service_dir, ".venv", "bin", "python")
+
         if os.path.exists(possible_service_venv):
             python_executable = possible_service_venv
 
