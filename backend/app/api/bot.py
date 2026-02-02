@@ -84,6 +84,7 @@ async def run_bot_logic(config: BotConfig):
         env = os.environ.copy()
         env["CONFIG_METHOD"] = "console" # Force console method to use CLI args
         env["PYTHONPATH"] = service_dir # Set pythonpath to service root
+        env["HEADLESS"] = "false" # Desactivar headless para ver el navegador
 
         # Configuración para mostrar navegador en Linux (si no es headless)
         if sys.platform == "linux":
