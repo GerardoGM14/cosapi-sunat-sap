@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from app.database import SessionLocal, get_db
 from app.models import MSociedad, MUsuario, MSap, MSapSociedad, MProgramacion, MProgramacionSociedad, DEjecucion, MListaBlanca, MListaBlancaSociedad
@@ -485,23 +485,30 @@ class ListaBlancaBase(BaseModel):
 class ListaBlancaResponse(ListaBlancaBase):
     fRegistro: datetime | None = None
     sociedades_rucs: List[str] = []
+    sociedades_nombres: List[str] = []
     
     class Config:
         orm_mode = True
 
 @router.get("/proveedores", response_model=List[ListaBlancaResponse])
 def get_proveedores(db: Session = Depends(get_db)):
-    proveedores = db.query(MListaBlanca).all()
+    proveedores = db.query(MListaBlanca).options(
+        joinedload(MListaBlanca.sociedades).joinedload(MListaBlancaSociedad.sociedad)
+    ).all()
     result = []
     for p in proveedores:
+        # Get Sociedades RUCs and Names
         sociedades = [s.tRucSociedad for s in p.sociedades]
+        sociedades_nombres = [s.sociedad.tRazonSocial for s in p.sociedades if s.sociedad]
+
         # Create a dict from the ORM object and add the extra field
         p_dict = {
             "tRucListaBlanca": p.tRucListaBlanca,
             "tRazonSocial": p.tRazonSocial,
             "lActivo": p.lActivo,
             "fRegistro": p.fRegistro,
-            "sociedades_rucs": sociedades
+            "sociedades_rucs": sociedades,
+            "sociedades_nombres": sociedades_nombres
         }
         result.append(p_dict)
     return result

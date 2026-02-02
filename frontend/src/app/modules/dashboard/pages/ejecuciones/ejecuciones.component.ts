@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AppConfigService } from '../../../../services/app-config.service';
 import { SociedadService } from '../../../../services/sociedad.service';
+import { ProveedorService } from '../../../../services/proveedor.service';
 
 const SAP_SOCIEDADES = [
     { id: 'PE01', name: 'PE01 - Country Template PE' },
@@ -81,7 +82,8 @@ export class EjecucionesComponent implements OnInit {
   constructor(
     private http: HttpClient, 
     private configService: AppConfigService,
-    private sociedadService: SociedadService
+    private sociedadService: SociedadService,
+    private proveedorService: ProveedorService
   ) {
     // Click outside listener for calendar
     document.addEventListener('click', (e: any) => {
@@ -93,6 +95,23 @@ export class EjecucionesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSociedades();
+    this.loadWhitelistCount();
+  }
+
+  loadWhitelistCount(): void {
+    this.proveedorService.getProveedores().subscribe({
+      next: (data) => {
+        // Filter providers that are active AND have at least one society linked
+        const activeProviders = data.filter(p => p.lActivo && p.sociedades_rucs && p.sociedades_rucs.length > 0);
+        this.globalWhitelist = activeProviders.map(p => ({
+          ruc: p.tRucListaBlanca,
+          razonSocial: p.tRazonSocial,
+          sociedadesNombres: p.sociedades_nombres ? p.sociedades_nombres.join(', ') : ''
+        }));
+        this.filterWhitelist();
+      },
+      error: (err) => console.error('Error fetching whitelist count', err)
+    });
   }
 
   loadSociedades(): void {
@@ -295,13 +314,27 @@ export class EjecucionesComponent implements OnInit {
     }
   }
 
-  // Drawer Logic
-  isDrawerOpen = false;
+  // Execution Modal Logic
+  isExecutionModalOpen = false;
   selectedExecution: any = null;
+  
+  // History Pagination & Controls
+  paginatedHistory: any[] = [];
+  historyCurrentPage: number = 1;
+  historyItemsPerPage: number = 10;
+  historyTotalPages: number = 1;
+  historyDateRange: string = ''; // Placeholder for now
 
-  openDrawer(item: any): void {
+  openExecutionModal(item: any): void {
     this.selectedExecution = item;
-    this.isDrawerOpen = true;
+    this.isExecutionModalOpen = true;
+    this.historyCurrentPage = 1; // Reset page
+    
+    // Set default date range to today for display (mock)
+    const today = new Date();
+    const formatted = this.formatDate(today);
+    this.historyDateRange = `${formatted} - ${formatted}`;
+
     document.body.style.overflow = 'hidden';
     
     // Fetch details for this RUC
@@ -313,9 +346,50 @@ export class EjecucionesComponent implements OnInit {
         next: (resp) => {
             this.selectedExecution.activas = resp.active;
             this.selectedExecution.historial = resp.history;
+            this.updateHistoryPagination(); // Init pagination
         },
         error: (err) => console.error('Error fetching details', err)
     });
+  }
+
+  updateHistoryPagination(): void {
+    if (!this.selectedExecution || !this.selectedExecution.historial) {
+        this.paginatedHistory = [];
+        return;
+    }
+    const totalItems = this.selectedExecution.historial.length;
+    this.historyTotalPages = Math.ceil(totalItems / this.historyItemsPerPage) || 1;
+    
+    const startIndex = (this.historyCurrentPage - 1) * this.historyItemsPerPage;
+    const endIndex = startIndex + this.historyItemsPerPage;
+    this.paginatedHistory = this.selectedExecution.historial.slice(startIndex, endIndex);
+  }
+
+  changeHistoryPage(delta: number): void {
+    const newPage = this.historyCurrentPage + delta;
+    if (newPage >= 1 && newPage <= this.historyTotalPages) {
+        this.historyCurrentPage = newPage;
+        this.updateHistoryPagination();
+    }
+  }
+  
+  setHistoryPage(page: number): void {
+    if (page >= 1 && page <= this.historyTotalPages) {
+        this.historyCurrentPage = page;
+        this.updateHistoryPagination();
+    }
+  }
+
+  onHistoryItemsPerPageChange(event: any): void {
+      this.historyItemsPerPage = parseInt(event.target.value, 10);
+      this.historyCurrentPage = 1;
+      this.updateHistoryPagination();
+  }
+
+  exportHistoryExcel(): void {
+      console.log('Exporting history to Excel...');
+      // Implement export logic here
+      alert('Funcionalidad de exportar a Excel en desarrollo.');
   }
 
   runProgramacion(progId: number, ruc: string): void {
@@ -333,8 +407,8 @@ export class EjecucionesComponent implements OnInit {
     });
   }
 
-  closeDrawer(): void {
-    this.isDrawerOpen = false;
+  closeExecutionModal(): void {
+    this.isExecutionModalOpen = false;
     this.selectedExecution = null;
     // Restore body scroll
     document.body.style.overflow = 'auto';
@@ -342,6 +416,7 @@ export class EjecucionesComponent implements OnInit {
 
   // Logs Modal Logic
   isLogModalOpen = false;
+  isLogModalClosing = false;
   selectedLogTask: any = null;
 
   openLogModal(task: any, event?: Event): void {
@@ -350,30 +425,71 @@ export class EjecucionesComponent implements OnInit {
     }
     this.selectedLogTask = task;
     this.isLogModalOpen = true;
+    this.isLogModalClosing = false;
   }
 
   closeLogModal(): void {
-    this.isLogModalOpen = false;
-    this.selectedLogTask = null;
+    this.isLogModalClosing = true;
+    setTimeout(() => {
+      this.isLogModalOpen = false;
+      this.isLogModalClosing = false;
+      this.selectedLogTask = null;
+    }, 200); // Matches animation duration
   }
 
   // Whitelist Modal Logic
   isWhitelistModalOpen = false;
-  globalWhitelist = [
-    { ruc: '20100123456', razonSocial: 'PROVEEDOR EJEMPLO 1 S.A.C.' },
-    { ruc: '20200123457', razonSocial: 'PROVEEDOR EJEMPLO 2 S.R.L.' },
-    { ruc: '20300123458', razonSocial: 'PROVEEDOR EJEMPLO 3 E.I.R.L.' },
-    { ruc: '20400123459', razonSocial: 'PROVEEDOR EJEMPLO 4 S.A.' },
-    { ruc: '20500123460', razonSocial: 'PROVEEDOR EJEMPLO 5 S.A.C.' },
-    { ruc: '20600123461', razonSocial: 'PROVEEDOR EJEMPLO 6 S.A.A.' }
-  ];
+  globalWhitelist: any[] = [];
+  filteredWhitelist: any[] = [];
+  paginatedWhitelist: any[] = [];
+  whitelistSearchTerm: string = '';
+  whitelistCurrentPage: number = 1;
+  whitelistItemsPerPage: number = 10;
+  totalWhitelistPages: number = 1;
 
   openWhitelistModal(): void {
     this.isWhitelistModalOpen = true;
+    this.whitelistSearchTerm = '';
+    this.whitelistCurrentPage = 1;
+    this.loadWhitelistCount(); // Refresh on open to ensure latest data
   }
 
   closeWhitelistModal(): void {
     this.isWhitelistModalOpen = false;
   }
-}
 
+  onWhitelistSearch(event: any): void {
+    this.whitelistSearchTerm = event.target.value;
+    this.whitelistCurrentPage = 1;
+    this.filterWhitelist();
+  }
+
+  filterWhitelist(): void {
+    if (!this.whitelistSearchTerm) {
+      this.filteredWhitelist = [...this.globalWhitelist];
+    } else {
+      const term = this.whitelistSearchTerm.toLowerCase();
+      this.filteredWhitelist = this.globalWhitelist.filter(item => 
+        (item.sociedadesNombres && item.sociedadesNombres.toLowerCase().includes(term)) ||
+        (item.razonSocial && item.razonSocial.toLowerCase().includes(term)) ||
+        (item.ruc && item.ruc.includes(term))
+      );
+    }
+    this.totalWhitelistPages = Math.ceil(this.filteredWhitelist.length / this.whitelistItemsPerPage) || 1;
+    this.updateWhitelistPagination();
+  }
+
+  updateWhitelistPagination(): void {
+    const startIndex = (this.whitelistCurrentPage - 1) * this.whitelistItemsPerPage;
+    const endIndex = startIndex + this.whitelistItemsPerPage;
+    this.paginatedWhitelist = this.filteredWhitelist.slice(startIndex, endIndex);
+  }
+
+  changeWhitelistPage(delta: number): void {
+    const newPage = this.whitelistCurrentPage + delta;
+    if (newPage >= 1 && newPage <= this.totalWhitelistPages) {
+      this.whitelistCurrentPage = newPage;
+      this.updateWhitelistPagination();
+    }
+  }
+}
