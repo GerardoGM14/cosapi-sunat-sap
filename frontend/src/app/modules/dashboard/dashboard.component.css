@@ -433,6 +433,11 @@ li.active > .nav-item .icon-wrapper svg {
 }
 
 @media (max-width: 576px) {
+  .sidebar {
+    width: 85%;
+    max-width: 280px;
+  }
+
   .search-bar {
     display: none;
   }

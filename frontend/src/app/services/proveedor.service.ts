@@ -17,6 +17,10 @@ export class ProveedorService {
     return `${this.config.apiUrl}/crud`;
   }
 
+  getProveedores(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/proveedores`);
+  }
+
   uploadExcel(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
@@ -31,5 +35,13 @@ export class ProveedorService {
 
   importBatch(proveedores: any[]): Observable<any> {
     return this.http.post(`${this.baseUrl}/proveedores/batch`, proveedores);
+  }
+
+  deleteProveedor(ruc: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/proveedores/${ruc}`);
+  }
+
+  updateSociedades(ruc: string, sociedades: string[]): Observable<any> {
+    return this.http.put(`${this.baseUrl}/proveedores/${ruc}/sociedades`, { sociedades });
   }
 }

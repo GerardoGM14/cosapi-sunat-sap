@@ -3,12 +3,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import MUsuario
-from passlib.context import CryptContext
 import hashlib
+import bcrypt
 
 router = APIRouter()
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class LoginRequest(BaseModel):
     username: str
@@ -22,20 +20,35 @@ def prepare_password(password: str) -> str:
     """
     Bcrypt has a limit of 72 bytes. If the password is longer,
     we hash it with SHA256 to get a safe 64-byte string.
+    Reduced limit to 70 to be safe with different bcrypt versions.
     """
-    password_bytes = password.encode('utf-8')
-    if len(password_bytes) > 72:
+    try:
+        password_bytes = password.encode('utf-8')
+    except AttributeError:
+        # If password is somehow not a string (e.g. None), return empty or handle gracefully
+        return ""
+        
+    if len(password_bytes) >= 70:
         # Return hex digest which is ASCII and 64 chars long
         return hashlib.sha256(password_bytes).hexdigest()
     return password
 
 def verify_password(plain_password, hashed_password):
     safe_password = prepare_password(plain_password)
-    return pwd_context.verify(safe_password, hashed_password)
+    try:
+        return bcrypt.checkpw(
+            safe_password.encode('utf-8'), 
+            hashed_password.encode('utf-8')
+        )
+    except Exception as e:
+        print(f"Error checking password: {e}")
+        return False
 
 def get_password_hash(password):
     safe_password = prepare_password(password)
-    return pwd_context.hash(safe_password)
+    # bcrypt.hashpw requires bytes
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(safe_password.encode('utf-8'), salt).decode('utf-8')
 
 @router.post("/login", response_model=Token)
 async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
@@ -54,9 +67,6 @@ async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
         )
     
     # Verificar contraseña
-    # Nota: Si las contraseñas antiguas no están hasheadas, esto fallará. 
-    # Para este caso, asumimos que todas las nuevas se hashean.
-    # Si la contraseña en DB no parece un hash bcrypt, intentamos comparación directa (migración suave)
     valid_password = False
     if user.tClave.startswith("$2b$") or user.tClave.startswith("$2a$"):
         valid_password = verify_password(credentials.password, user.tClave)
@@ -71,4 +81,3 @@ async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
         )
         
     return {"access_token": f"user-{user.iMusuario}", "token_type": "bearer"}
-

@@ -278,19 +278,24 @@
 .status-badge.danger { background-color: rgba(231, 76, 60, 0.15); color: #c0392b; }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .stats-group {
-    grid-template-columns: 1fr 1fr; /* Keep 2 columns on tablet */
-  }
-}
-
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .dashboard-row {
     flex-direction: column;
   }
-  
+
   .stats-group {
-    grid-template-columns: 1fr; /* Stack stats on mobile */
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .hero-card, .stats-group, .chart-section, .list-section {
+    width: 100%;
+    flex: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .stats-group {
+    grid-template-columns: 1fr;
   }
   
   .hero-content {
@@ -310,6 +315,11 @@
   /* Charts/Lists */
   .chart-placeholder {
     height: 200px;
+    overflow-x: auto; /* Allow scrolling for wide charts */
+  }
+  
+  .bar-group {
+    min-width: 30px; /* Ensure bars don't get too thin */
   }
   
   .card-header {

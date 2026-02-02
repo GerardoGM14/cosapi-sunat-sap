@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import SessionLocal, get_db
-from app.models import MSociedad, MUsuario, MSap, MSapSociedad, MProgramacion, MProgramacionSociedad, DEjecucion, MListaBlanca
+from app.models import MSociedad, MUsuario, MSap, MSapSociedad, MProgramacion, MProgramacionSociedad, DEjecucion, MListaBlanca, MListaBlancaSociedad
 from app.api.auth import get_password_hash
 from app.services.execution import execute_programacion_logic, execute_sociedad_logic
 from pydantic import BaseModel
@@ -135,6 +135,70 @@ def associate_sap_to_sociedad(ruc: str, sap_id: int, db: Session = Depends(get_d
 def read_usuarios(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     usuarios = db.query(MUsuario).offset(skip).limit(limit).all()
     return usuarios
+
+@router.post("/usuarios", response_model=UsuarioResponse)
+def create_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+    db_usuario = db.query(MUsuario).filter(MUsuario.tCorreo == usuario.tCorreo).first()
+    if db_usuario:
+        raise HTTPException(status_code=400, detail="El correo ya está registrado")
+    
+    hashed_password = get_password_hash(usuario.tClave)
+    
+    new_usuario = MUsuario(
+        tNombre=usuario.tNombre,
+        tApellidos=usuario.tApellidos,
+        tCorreo=usuario.tCorreo,
+        tClave=hashed_password,
+        iMRol=usuario.iMRol,
+        lNotificacion=usuario.lNotificacion,
+        lActivo=usuario.lActivo,
+        fRegistro=datetime.now()
+    )
+    db.add(new_usuario)
+    db.commit()
+    db.refresh(new_usuario)
+    return new_usuario
+
+@router.delete("/usuarios/{user_id}")
+def delete_usuario(user_id: int, db: Session = Depends(get_db)):
+    db_usuario = db.query(MUsuario).filter(MUsuario.iMusuario == user_id).first()
+    if not db_usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    db.delete(db_usuario)
+    db.commit()
+    return {"message": "Usuario eliminado exitosamente"}
+
+@router.put("/usuarios/{user_id}", response_model=UsuarioResponse)
+def update_usuario(user_id: int, usuario: UsuarioUpdate, db: Session = Depends(get_db)):
+    db_usuario = db.query(MUsuario).filter(MUsuario.iMusuario == user_id).first()
+    if not db_usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if usuario.tNombre is not None:
+        db_usuario.tNombre = usuario.tNombre
+    if usuario.tApellidos is not None:
+        db_usuario.tApellidos = usuario.tApellidos
+    if usuario.tCorreo is not None:
+        # Check uniqueness if email changes
+        if usuario.tCorreo != db_usuario.tCorreo:
+            existing_user = db.query(MUsuario).filter(MUsuario.tCorreo == usuario.tCorreo).first()
+            if existing_user:
+                raise HTTPException(status_code=400, detail="El correo ya está en uso")
+        db_usuario.tCorreo = usuario.tCorreo
+    if usuario.tClave is not None and usuario.tClave != "":
+         # Only update password if provided
+         db_usuario.tClave = get_password_hash(usuario.tClave)
+    if usuario.iMRol is not None:
+        db_usuario.iMRol = usuario.iMRol
+    if usuario.lNotificacion is not None:
+        db_usuario.lNotificacion = usuario.lNotificacion
+    if usuario.lActivo is not None:
+        db_usuario.lActivo = usuario.lActivo
+        
+    db.commit()
+    db.refresh(db_usuario)
+    return db_usuario
 
 @router.get("/sociedades", response_model=List[SociedadResponse])
 def read_sociedades(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -420,13 +484,47 @@ class ListaBlancaBase(BaseModel):
 
 class ListaBlancaResponse(ListaBlancaBase):
     fRegistro: datetime | None = None
+    sociedades_rucs: List[str] = []
     
     class Config:
         orm_mode = True
 
 @router.get("/proveedores", response_model=List[ListaBlancaResponse])
 def get_proveedores(db: Session = Depends(get_db)):
-    return db.query(MListaBlanca).all()
+    proveedores = db.query(MListaBlanca).all()
+    result = []
+    for p in proveedores:
+        sociedades = [s.tRucSociedad for s in p.sociedades]
+        # Create a dict from the ORM object and add the extra field
+        p_dict = {
+            "tRucListaBlanca": p.tRucListaBlanca,
+            "tRazonSocial": p.tRazonSocial,
+            "lActivo": p.lActivo,
+            "fRegistro": p.fRegistro,
+            "sociedades_rucs": sociedades
+        }
+        result.append(p_dict)
+    return result
+
+class ListaBlancaSociedadesUpdate(BaseModel):
+    sociedades: List[str]
+
+@router.put("/proveedores/{ruc}/sociedades")
+def update_proveedor_sociedades(ruc: str, update: ListaBlancaSociedadesUpdate, db: Session = Depends(get_db)):
+    proveedor = db.query(MListaBlanca).filter(MListaBlanca.tRucListaBlanca == ruc).first()
+    if not proveedor:
+        raise HTTPException(status_code=404, detail="Proveedor no encontrado")
+    
+    # Clear existing
+    db.query(MListaBlancaSociedad).filter(MListaBlancaSociedad.tRucListaBlanca == ruc).delete()
+    
+    # Add new
+    for sociedad_ruc in update.sociedades:
+        new_relation = MListaBlancaSociedad(tRucListaBlanca=ruc, tRucSociedad=sociedad_ruc)
+        db.add(new_relation)
+    
+    db.commit()
+    return {"message": "Sociedades actualizadas correctamente"}
 
 @router.post("/proveedores/preview")
 async def preview_proveedores_excel(file: UploadFile = File(...)):
@@ -494,6 +592,20 @@ async def preview_proveedores_excel(file: UploadFile = File(...)):
     except Exception as e:
         print(f"Error procesando excel: {e}")
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+
+@router.delete("/proveedores/{ruc}")
+def delete_proveedor(ruc: str, db: Session = Depends(get_db)):
+    try:
+        proveedor = db.query(MListaBlanca).filter(MListaBlanca.tRucListaBlanca == ruc).first()
+        if not proveedor:
+            raise HTTPException(status_code=404, detail="Proveedor no encontrado")
+        
+        db.delete(proveedor)
+        db.commit()
+        return {"message": "Proveedor eliminado correctamente"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al eliminar proveedor: {str(e)}")
 
 @router.post("/proveedores/batch")
 async def create_proveedores_batch(proveedores: List[ListaBlancaBase], db: Session = Depends(get_db)):

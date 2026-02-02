@@ -327,6 +327,35 @@
 
 @media (max-width: 576px) {
   .top-header {
-      padding: 0 1rem;
+    padding: 0 1rem;
+  }
+
+  .status-text {
+    display: none;
+  }
+
+  .header-right {
+    gap: 0.8rem;
+  }
+
+  .breadcrumb {
+    font-size: 0.85rem;
+  }
+
+  /* Hide all breadcrumb items and separators by default on mobile */
+  .breadcrumb-item,
+  .breadcrumb-separator {
+    display: none;
+  }
+
+  /* Only show the last breadcrumb item (current page) */
+  .breadcrumb-item:last-child {
+    display: flex;
+    font-weight: 600;
+    color: #34495e;
+  }
+  
+  .breadcrumb-icon {
+    margin-right: 0.25rem;
   }
 }

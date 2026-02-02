@@ -17,6 +17,8 @@ export class UsuariosComponent implements OnInit {
 
   // Modal Logic
   isModalOpen: boolean = false;
+  isEditMode: boolean = false;
+  currentUserId: number | null = null;
   showModalClave: boolean = false;
   
   // Delete Modal Logic
@@ -48,6 +50,8 @@ export class UsuariosComponent implements OnInit {
       next: (data) => {
         this.usuarios = data.map(u => ({
           id: u.iMusuario,
+          nombres: u.tNombre,
+          apellidos: u.tApellidos,
           nombreCompleto: `${u.tNombre} ${u.tApellidos}`,
           correo: u.tCorreo,
           clave: u.tClave,
@@ -64,23 +68,41 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  openModal(): void {
+  openModal(user?: any): void {
     this.isModalOpen = true;
-    // Reset or initialize new entry
-    this.newUsuario = {
-      nombres: '',
-      apellidos: '',
-      correo: '',
-      clave: '',
-      rol: '',
-      notificaciones: true,
-      estado: true
-    };
+    if (user) {
+      this.isEditMode = true;
+      this.currentUserId = user.id;
+      this.newUsuario = {
+        nombres: user.nombres,
+        apellidos: user.apellidos,
+        correo: user.correo,
+        clave: '', // Leave empty to not change
+        rol: user.rol,
+        notificaciones: user.notificaciones,
+        estado: user.estado
+      };
+    } else {
+      this.isEditMode = false;
+      this.currentUserId = null;
+      // Reset or initialize new entry
+      this.newUsuario = {
+        nombres: '',
+        apellidos: '',
+        correo: '',
+        clave: '',
+        rol: '',
+        notificaciones: true,
+        estado: true
+      };
+    }
     this.showModalClave = false;
   }
 
   closeModal(): void {
     this.isModalOpen = false;
+    this.isEditMode = false;
+    this.currentUserId = null;
   }
 
   toggleClaveVisibility(item: any): void {
@@ -93,8 +115,14 @@ export class UsuariosComponent implements OnInit {
 
   saveUsuario(): void {
     // 1. Validar campos obligatorios
-    if (!this.newUsuario.nombres || !this.newUsuario.apellidos || !this.newUsuario.correo || !this.newUsuario.clave || !this.newUsuario.rol) {
-        this.showError('Por favor complete todos los campos obligatorios (Nombres, Apellidos, Correo, Rol y Clave).');
+    // Password is only required for new users
+    if (!this.newUsuario.nombres || !this.newUsuario.apellidos || !this.newUsuario.correo || !this.newUsuario.rol) {
+        this.showError('Por favor complete los campos obligatorios (Nombres, Apellidos, Correo, Rol).');
+        return;
+    }
+
+    if (!this.isEditMode && !this.newUsuario.clave) {
+        this.showError('La contraseña es obligatoria para nuevos usuarios.');
         return;
     }
 
@@ -113,23 +141,25 @@ export class UsuariosComponent implements OnInit {
          return;
     }
 
-    // 3. Validar complejidad de contraseña
-    // Min 8 chars, 1 uppercase, 1 symbol
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(this.newUsuario.clave);
-    const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(this.newUsuario.clave); // Common symbols
+    // 3. Validar complejidad de contraseña (solo si se proporciona)
+    if (this.newUsuario.clave) {
+        // Min 8 chars, 1 uppercase, 1 symbol
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(this.newUsuario.clave);
+        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(this.newUsuario.clave); // Common symbols
 
-    if (this.newUsuario.clave.length < minLength) {
-        this.showError('La contraseña debe tener al menos 8 caracteres.');
-        return;
-    }
-    if (!hasUpperCase) {
-        this.showError('La contraseña debe tener al menos una letra mayúscula.');
-        return;
-    }
-    if (!hasSymbol) {
-        this.showError('La contraseña debe tener al menos un símbolo (ej. !@#$%).');
-        return;
+        if (this.newUsuario.clave.length < minLength) {
+            this.showError('La contraseña debe tener al menos 8 caracteres.');
+            return;
+        }
+        if (!hasUpperCase) {
+            this.showError('La contraseña debe tener al menos una letra mayúscula.');
+            return;
+        }
+        if (!hasSymbol) {
+            this.showError('La contraseña debe tener al menos un símbolo (ej. !@#$%).');
+            return;
+        }
     }
 
     const payload = {
@@ -142,18 +172,33 @@ export class UsuariosComponent implements OnInit {
         lActivo: this.newUsuario.estado
     };
 
-    this.usuarioService.create(payload).subscribe({
-        next: (res) => {
-            console.log('Usuario creado', res);
-            this.showSuccess('Usuario creado correctamente.');
-            this.loadUsuarios();
-            this.closeModal();
-        },
-        error: (err) => {
-            console.error('Error creando usuario', err);
-            this.showError('Error al crear usuario: ' + (err.error?.detail || err.message));
-        }
-    });
+    if (this.isEditMode && this.currentUserId) {
+        this.usuarioService.update(this.currentUserId, payload).subscribe({
+            next: (res) => {
+                console.log('Usuario actualizado', res);
+                this.showSuccess('Usuario actualizado correctamente.');
+                this.loadUsuarios();
+                this.closeModal();
+            },
+            error: (err) => {
+                console.error('Error actualizando usuario', err);
+                this.showError('Error al actualizar usuario: ' + (err.error?.detail || err.message));
+            }
+        });
+    } else {
+        this.usuarioService.create(payload).subscribe({
+            next: (res) => {
+                console.log('Usuario creado', res);
+                this.showSuccess('Usuario creado correctamente.');
+                this.loadUsuarios();
+                this.closeModal();
+            },
+            error: (err) => {
+                console.error('Error creando usuario', err);
+                this.showError('Error al crear usuario: ' + (err.error?.detail || err.message));
+            }
+        });
+    }
   }
 
   filterData(): void {

@@ -5,7 +5,7 @@
       <h1 class="page-title">Proveedores</h1>
       <p class="page-subtitle">Gestión de proveedores y accesos.</p>
     </div>
-    <div style="display: flex; gap: 10px;">
+    <div class="header-actions">
         <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)" accept=".xlsx, .xls" />
         <button class="btn-upload-excel" (click)="fileInput.click()">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -22,7 +22,7 @@
   <div class="table-toolbar">
     <div class="search-input-wrapper">
       <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      <input type="text" placeholder="Buscar por nombre o RUC" (input)="onSearch($event)">
+      <input type="text" placeholder="Buscar por Razón Social o RUC" (input)="onSearch($event)">
     </div>
     
     <div class="filter-wrapper">
@@ -40,7 +40,7 @@
     <table>
       <thead>
         <tr>
-          <th style="width: 50px;">#</th>
+          <th style="width: 50px;">N°</th>
           <th>RUC</th>
           <th>Razón Social</th>
           <th style="width: 120px; text-align: center;">Lista Blanca</th>
@@ -49,17 +49,17 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let item of filteredProveedores; let i = index">
-          <td class="text-center">{{ item.id }}</td>
+        <tr *ngFor="let item of paginatedProveedores; let i = index">
+          <td class="text-center cell-value">{{ (currentPage - 1) * itemsPerPage + i + 1 }}</td>
           <td>
             <div class="cell-primary-bold">{{ item.ruc }}</div>
           </td>
           <td class="cell-value">{{ item.razonSocial }}</td>
           <td class="text-center">
-            <label class="table-checkbox-wrapper">
-              <input type="checkbox" [(ngModel)]="item.listaBlanca">
-              <div class="table-checkbox-face"></div>
-            </label>
+            <div class="badge-whitelist" (click)="openSociedadesModal(item)" title="Gestionar Lista Blanca">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <span>{{ item.sociedadesCount }}/{{ item.totalSociedades }}</span>
+            </div>
           </td>
           <td class="text-center">
             <div class="toggle-switch" [class.active]="item.estado" (click)="toggleStatus(item)">
@@ -67,9 +67,14 @@
             </div>
           </td>
           <td class="text-center">
-            <button class="btn-icon-edit">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#57606f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            </button>
+            <div class="action-buttons">
+              <button class="btn-icon-edit" title="Editar" (click)="openModal(item)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button class="btn-icon-delete" (click)="openDeleteModal(item)" title="Eliminar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -78,19 +83,57 @@
 
   <!-- Pagination -->
   <div class="pagination-footer">
-    <span class="pagination-info">Mostrando 1 – {{ filteredProveedores.length }} de {{ filteredProveedores.length }} resultados</span>
+    <span class="pagination-info">
+      Mostrando {{ totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1 }} – 
+      {{ (currentPage * itemsPerPage) > totalItems ? totalItems : (currentPage * itemsPerPage) }} 
+      de {{ totalItems }} resultados
+    </span>
     <div class="pagination-controls">
-      <button class="page-btn disabled">&lt;</button>
-      <button class="page-btn active">1</button>
-      <button class="page-btn disabled">&gt;</button>
+      <button class="page-btn" [class.disabled]="currentPage === 1" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">&lt;</button>
+      <button class="page-btn active">{{ currentPage }}</button>
+      <button class="page-btn" [class.disabled]="currentPage >= totalPages" [disabled]="currentPage >= totalPages" (click)="changePage(currentPage + 1)">&gt;</button>
     </div>
     <div class="rows-per-page">
       <span>Filas por página</span>
-      <select>
-        <option>10</option>
-        <option>20</option>
-        <option>50</option>
+      <select (change)="onItemsPerPageChange($event)">
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
       </select>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Eliminar Proveedor -->
+<div class="modal-overlay" *ngIf="isDeleteModalOpen">
+  <div class="modal-container" style="max-width: 450px;">
+    <div class="modal-header">
+      <div class="modal-title-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        <h2>Eliminar Proveedor</h2>
+      </div>
+      <button class="btn-close-modal" (click)="closeDeleteModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <p style="margin-bottom: 20px; color: #4b5563; font-size: 0.95rem; line-height: 1.5;">
+        ¿Está seguro de eliminar al proveedor <strong>{{ itemToDelete?.razonSocial }}</strong> (RUC: {{ itemToDelete?.ruc }})? 
+        <br>
+        <span style="color: #ef4444; font-size: 0.85rem;">Esta acción no se puede deshacer.</span>
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeDeleteModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        Cancelar
+      </button>
+      <button class="btn-delete-confirm" (click)="confirmDelete()" style="background-color: #ef4444; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        Eliminar
+      </button>
     </div>
   </div>
 </div>
@@ -106,7 +149,7 @@
       </div>
       
       <div class="modal-body">
-        <div class="preview-table-container" style="max-height: 400px; overflow-y: auto;">
+        <div class="preview-table-container">
           <table class="preview-table">
             <thead>
                 <tr>
@@ -139,7 +182,7 @@
     <div class="modal-header">
       <div class="modal-title-wrapper">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-        <h2>Nuevo Proveedor</h2>
+        <h2>{{ isEditMode ? 'Editar Proveedor' : 'Nuevo Proveedor' }}</h2>
       </div>
       <button class="btn-close-modal" (click)="closeModal()">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -151,21 +194,12 @@
       <div class="form-row two-col">
         <div class="form-group">
           <label>RUC</label>
-          <input type="text" [(ngModel)]="newProveedor.ruc" class="form-control">
+          <input type="text" [(ngModel)]="newProveedor.ruc" class="form-control" [disabled]="isEditMode" [class.disabled-input]="isEditMode">
         </div>
         <div class="form-group">
           <label>Razón Social</label>
           <input type="text" [(ngModel)]="newProveedor.razonSocial" class="form-control">
         </div>
-      </div>
-
-      <!-- Lista Blanca -->
-      <div class="form-group checkbox-group">
-         <label class="checkbox-container">
-           <input type="checkbox" [(ngModel)]="newProveedor.listaBlanca">
-           <span class="checkmark-box"></span>
-           <span class="label-text">Lista Blanca</span>
-         </label>
       </div>
     </div>
 
@@ -176,8 +210,49 @@
       </button>
       <button class="btn-save" (click)="saveProveedor()">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        Guardar
+        {{ isEditMode ? 'Actualizar' : 'Guardar' }}
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Sociedades Lista Blanca -->
+<div class="modal-overlay" *ngIf="isSociedadesModalOpen">
+  <div class="modal-container" style="max-width: 500px;">
+    <div class="modal-header">
+      <div class="modal-title-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <h2>Asignar Sociedades</h2>
+      </div>
+      <button class="btn-close-modal" (click)="closeSociedadesModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-description">Seleccione las sociedades donde este proveedor estará en Lista Blanca.</p>
+      
+      <div class="sociedad-search-container">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" placeholder="Buscar sociedad:" [value]="sociedadSearchTerm" (input)="onSociedadSearch($event)" class="form-control sociedad-search-input">
+      </div>
+
+      <div class="sociedades-list">
+        <div class="sociedad-item" *ngFor="let sociedad of filteredSociedadesList" (click)="toggleSociedadSelection(sociedad.tRuc)">
+          <div class="sociedad-checkbox" [class.checked]="isSociedadSelected(sociedad.tRuc)">
+            <svg *ngIf="isSociedadSelected(sociedad.tRuc)" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <div class="sociedad-info">
+            <span class="sociedad-name">{{ sociedad.tRazonSocial }}</span>
+            <span class="sociedad-ruc">{{ sociedad.tRuc }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeSociedadesModal()">Cancelar</button>
+      <button class="btn-save" (click)="saveSociedades()">Guardar Cambios</button>
     </div>
   </div>
 </div>

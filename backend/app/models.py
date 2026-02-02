@@ -150,6 +150,17 @@ class MListaBlanca(Base):
     fModificacion = Column(DateTime)
 
     ejecuciones_detalle = relationship("DEjecucionListaBlanca", back_populates="lista_blanca")
+    sociedades = relationship("MListaBlancaSociedad", back_populates="lista_blanca", cascade="all, delete-orphan")
+
+class MListaBlancaSociedad(Base):
+    __tablename__ = "MLISTA_BLANCA_SOCIEDAD"
+
+    iMDetalle = Column(Integer, primary_key=True, index=True)
+    tRucListaBlanca = Column(String(11), ForeignKey("MLISTA_BLANCA.tRucListaBlanca"))
+    tRucSociedad = Column(String(11), ForeignKey("MSOCIEDAD.tRuc"))
+    
+    lista_blanca = relationship("MListaBlanca", back_populates="sociedades")
+    sociedad = relationship("MSociedad")
 
 class MRol(Base):
     __tablename__ = "MROL"

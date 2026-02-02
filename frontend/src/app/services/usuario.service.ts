@@ -39,6 +39,10 @@ export class UsuarioService {
     return this.http.post<Usuario>(`${this.baseUrl}/usuarios`, usuario);
   }
 
+  update(id: number, usuario: any): Observable<Usuario> {
+    return this.http.put<Usuario>(`${this.baseUrl}/usuarios/${id}`, usuario);
+  }
+
   delete(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/usuarios/${id}`);
   }
