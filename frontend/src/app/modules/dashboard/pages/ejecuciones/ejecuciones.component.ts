@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { AppConfigService } from '../../../../services/app-config.service';
 
 @Component({
   selector: 'app-ejecuciones',
@@ -7,105 +9,164 @@ import { Component, OnInit } from '@angular/core';
 })
 export class EjecucionesComponent implements OnInit {
   
-  // Dummy data for the table based on image
-  ejecuciones = [
-    {
-      id: 1,
-      nombre: 'SERVICIOS LOGISTICOS PERU S.A.',
-      ruc: '20100123456',
-      ultimaEjecucion: '21/01/2026 • 18:29',
-      totalEjecuciones: 10,
-      listaBlanca: 6,
-      listaBlancaTotal: 10,
-      estado: 'Ejecutar',
-      activas: [
-        { 
-          nombre: 'Sincronización Nocturna SAP', 
-          tipo: 'Programación', 
-          detalle: 'Prog.: 10:58 - Lunes', 
-          progreso: 45,
-          logs: [
-            { fecha: '21/01/2026 - 13:47', configuracion: 'Validación de Credenciales SOL', estado: 'Completado' },
-            { fecha: '21/01/2026 - 13:47', configuracion: 'Extracción de movimientos del día', estado: 'Proceso ...' },
-            { fecha: '21/01/2026 - 13:48', configuracion: 'Generación de reporte XML', estado: 'Pendiente' }
-          ]
-        },
-        { 
-          nombre: 'Procesamiento Manual', 
-          tipo: 'Manual', 
-          detalle: 'Disp: 2026-01-22', 
-          progreso: 45,
-          logs: []
-        }
-      ],
-      historial: [
-        { 
-          fecha: '22/01/2026 • 14:27', 
-          nombre: 'Sincronización Nocturna SAP', 
-          tipo: 'Programación', 
-          detalle: 'Prog.: 10:58 - Lunes',
-          logs: [
-            { fecha: '21/01/2026 - 13:47', configuracion: 'Validación de Credenciales SOL', estado: 'Completado' },
-            { fecha: '21/01/2026 - 13:47', configuracion: 'Extracción de movimientos del día', estado: 'Fallido' }
-          ]
-        },
-        { fecha: '21/01/2026 • 09:30', nombre: 'Reporte Mensual', tipo: 'Manual', detalle: 'Usuario: Admin' }
-      ]
-    },
-    {
-      id: 2,
-      nombre: 'COSAPI S.A.',
-      ruc: '20100017491',
-      ultimaEjecucion: '22/01/2026 • 10:15',
-      totalEjecuciones: 45,
-      listaBlanca: 45,
-      listaBlancaTotal: 45,
-      estado: 'Procesando',
-      activas: [
-        { nombre: 'Validación de Facturas', tipo: 'Automático', detalle: 'Lote #4592', progreso: 78 }
-      ],
-      historial: [
-        { fecha: '21/01/2026 • 18:00', nombre: 'Cierre Diario', tipo: 'Programación', detalle: 'Automático' },
-        { fecha: '20/01/2026 • 18:00', nombre: 'Cierre Diario', tipo: 'Programación', detalle: 'Automático' }
-      ]
-    },
-    {
-      id: 3,
-      nombre: 'SERVICIOS COMPLETOS PERU S.A',
-      ruc: '20555888999',
-      ultimaEjecucion: '20/01/2026 • 08:00',
-      totalEjecuciones: 12,
-      listaBlanca: 10,
-      listaBlancaTotal: 12,
-      estado: 'Ejecutar',
-      activas: [],
-      historial: [
-        { fecha: '19/01/2026 • 15:30', nombre: 'Auditoría Interna', tipo: 'Manual', detalle: 'Solicitado por Gerencia' }
-      ]
-    },
-    {
-      id: 4,
-      nombre: 'INVERSIONES GENERALES S.A.C.',
-      ruc: '20601234567',
-      ultimaEjecucion: '23/01/2026 • 11:20',
-      totalEjecuciones: 5,
-      listaBlanca: 5,
-      listaBlancaTotal: 5,
-      estado: 'Ejecutar',
-      activas: [
-        { nombre: 'Actualización de Inventario', tipo: 'Programación', detalle: 'Semanal', progreso: 12 }
-      ],
-      historial: []
-    }
-  ];
-
-  filteredEjecuciones = [...this.ejecuciones];
+  ejecuciones: any[] = [];
+  filteredEjecuciones: any[] = [];
   searchTerm: string = '';
   selectedStatus: string = 'TODOS';
 
-  constructor() { }
+  // Calendar Logic
+  weekDays = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
+  months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  currentCalendarDate: Date = new Date();
+  daysInMonth: any[] = [];
+  activeCalendarRowId: number | null = null;
+
+  // Params Modal Logic
+  isParamsModalOpen = false;
+  selectedParamsTask: any = null;
+
+  constructor(private http: HttpClient, private configService: AppConfigService) {
+    // Click outside listener for calendar
+    document.addEventListener('click', (e: any) => {
+        if (!e.target.closest('.custom-date-wrapper')) {
+            this.activeCalendarRowId = null;
+        }
+    });
+  }
 
   ngOnInit(): void {
+    this.loadSociedades();
+  }
+
+  loadSociedades(): void {
+    const today = new Date();
+    this.http.get<any[]>(`${this.configService.apiUrl}/crud/sociedades`).subscribe({
+      next: (data) => {
+        this.ejecuciones = data.map((item, index) => ({
+            id: index + 1,
+            nombre: item.tRazonSocial,
+            ruc: item.tRuc,
+            ultimaEjecucion: '-', 
+            totalEjecuciones: 0,
+            listaBlanca: 0, 
+            listaBlancaTotal: 0, 
+            estado: 'Ejecutar', 
+            activas: [],
+            historial: [],
+            // New Date Fields
+            selectedDate: today,
+            selectedDateFormatted: this.formatDate(today)
+        }));
+        this.filterData();
+      },
+      error: (err) => console.error('Error loading sociedades', err)
+    });
+  }
+
+  // ... Calendar Methods ...
+  toggleCalendar(item: any, event: Event): void {
+      event.stopPropagation();
+      if (this.activeCalendarRowId === item.id) {
+          this.activeCalendarRowId = null;
+      } else {
+          this.activeCalendarRowId = item.id;
+          this.currentCalendarDate = new Date(item.selectedDate);
+          this.generateCalendar(this.currentCalendarDate);
+      }
+  }
+
+  generateCalendar(date: Date): void {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      const days = [];
+      const startDay = firstDay.getDay(); // 0 = Sunday
+      const totalDays = lastDay.getDate();
+      
+      // Previous month days
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startDay - 1; i >= 0; i--) {
+          days.push({
+              day: prevMonthLastDay - i,
+              currentMonth: false,
+              date: new Date(year, month - 1, prevMonthLastDay - i)
+          });
+      }
+      
+      // Current month days
+      for (let i = 1; i <= totalDays; i++) {
+          days.push({
+              day: i,
+              currentMonth: true,
+              date: new Date(year, month, i)
+          });
+      }
+      
+      // Next month days to fill grid (42 cells total usually)
+      const remaining = 42 - days.length;
+      for (let i = 1; i <= remaining; i++) {
+          days.push({
+              day: i,
+              currentMonth: false,
+              date: new Date(year, month + 1, i)
+          });
+      }
+      
+      this.daysInMonth = days;
+  }
+
+  changeMonth(delta: number, event: Event): void {
+      event.stopPropagation();
+      this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + delta);
+      this.currentCalendarDate = new Date(this.currentCalendarDate); // Trigger change detection
+      this.generateCalendar(this.currentCalendarDate);
+  }
+
+  selectDate(dayObj: any, item: any): void {
+      item.selectedDate = dayObj.date;
+      item.selectedDateFormatted = this.formatDate(dayObj.date);
+      this.activeCalendarRowId = null;
+  }
+
+  formatDate(date: Date): string {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+  }
+  
+  // Params Modal Methods
+  openParamsModal(item: any): void {
+      this.selectedParamsTask = item;
+      this.isParamsModalOpen = true;
+  }
+
+  closeParamsModal(): void {
+      this.isParamsModalOpen = false;
+      this.selectedParamsTask = null;
+  }
+
+  executeFromModal(): void {
+      if (!this.selectedParamsTask) return;
+      
+      const payload = {
+        date: this.selectedParamsTask.selectedDateFormatted
+      };
+
+      this.http.post(`${this.configService.apiUrl}/crud/sociedades/${this.selectedParamsTask.ruc}/execute`, payload)
+        .subscribe({
+          next: (res: any) => {
+            alert(`Ejecución iniciada correctamente para ${this.selectedParamsTask.nombre}.`);
+            this.closeParamsModal();
+          },
+          error: (err) => {
+            console.error('Error executing manually', err);
+            alert('Error al iniciar la ejecución. Verifique que la sociedad tenga cuenta SAP activa.');
+          }
+        });
   }
 
   filterData(): void {
@@ -141,8 +202,35 @@ export class EjecucionesComponent implements OnInit {
   openDrawer(item: any): void {
     this.selectedExecution = item;
     this.isDrawerOpen = true;
-    // Prevent body scroll when drawer is open
     document.body.style.overflow = 'hidden';
+    
+    // Fetch details for this RUC
+    this.fetchExecutionDetails(item);
+  }
+
+  fetchExecutionDetails(item: any): void {
+    this.http.get<any>(`${this.configService.apiUrl}/crud/sociedades/${item.ruc}/ejecuciones`).subscribe({
+        next: (resp) => {
+            this.selectedExecution.activas = resp.active;
+            this.selectedExecution.historial = resp.history;
+        },
+        error: (err) => console.error('Error fetching details', err)
+    });
+  }
+
+  runProgramacion(progId: number, ruc: string): void {
+    if(!confirm('¿Estás seguro de ejecutar esta programación ahora?')) return;
+
+    this.http.post(`${this.configService.apiUrl}/crud/programacion/${progId}/execute?ruc=${ruc}`, {}).subscribe({
+        next: (resp) => {
+            alert('Ejecución iniciada correctamente');
+            this.fetchExecutionDetails(this.selectedExecution);
+        },
+        error: (err) => {
+            console.error('Error executing programacion', err);
+            alert('Error al iniciar la ejecución');
+        }
+    });
   }
 
   closeDrawer(): void {

@@ -194,6 +194,7 @@ class MSociedad(Base):
     __tablename__ = "MSOCIEDAD"
 
     tRuc = Column(String(11), primary_key=True, index=True)
+    tCodigoSap = Column(String(10)) # Codigo SAP (ej: PE01)
     tRazonSocial = Column(String(10)) # Note: SQL says nchar(10), might be short but keeping faithful
     tUsuario = Column(String(50))
     tClave = Column(String)
@@ -228,3 +229,26 @@ class MUsuario(Base):
 
     rol = relationship("MRol", back_populates="usuarios")
     ejecuciones = relationship("DEjecucion", back_populates="usuario")
+
+class MProgramacion(Base):
+    __tablename__ = "MPROGRAMACION"
+
+    iMProgramacion = Column(Integer, primary_key=True, index=True)
+    tNombre = Column(String(250))
+    tHora = Column(String(5)) # HH:MM
+    tDias = Column(String(100)) # "Lun,Mar,Mie"
+    iSociedadesCount = Column(Integer, default=0) # Cache count for list view
+    lActivo = Column(Boolean, default=True)
+    fRegistro = Column(DateTime, default=datetime.utcnow)
+    
+    sociedades = relationship("MProgramacionSociedad", back_populates="programacion", cascade="all, delete-orphan")
+
+class MProgramacionSociedad(Base):
+    __tablename__ = "MPROGRAMACION_SOCIEDAD"
+
+    iMDetalle = Column(Integer, primary_key=True, index=True)
+    iMProgramacion = Column(Integer, ForeignKey("MPROGRAMACION.iMProgramacion"))
+    tRuc = Column(String(11), ForeignKey("MSOCIEDAD.tRuc"))
+    
+    programacion = relationship("MProgramacion", back_populates="sociedades")
+    sociedad = relationship("MSociedad")

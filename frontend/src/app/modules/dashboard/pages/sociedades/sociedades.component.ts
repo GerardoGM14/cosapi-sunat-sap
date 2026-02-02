@@ -27,18 +27,33 @@ export class SociedadesComponent implements OnInit {
   errorMessage: string = '';
   successMessage: string = '';
 
-  newProgramacion = {
+  // SAP Accounts
+  sapAccounts: any[] = [];
+
+  newProgramacion: any = {
     ruc: '',
+    codigoSap: '',
     razonSocial: '',
     usuarioSunat: '',
     claveSol: '',
-    estado: true
+    estado: true,
+    selectedSapAccount: null
   };
 
   constructor(private sociedadService: SociedadService) { }
 
   ngOnInit(): void {
     this.loadSociedades();
+    this.loadSapAccounts();
+  }
+
+  loadSapAccounts(): void {
+    this.sociedadService.getAllSapAccounts().subscribe({
+      next: (data) => {
+        this.sapAccounts = data;
+      },
+      error: (err) => console.error('Error loading SAP accounts:', err)
+    });
   }
 
   loadSociedades(): void {
@@ -47,6 +62,7 @@ export class SociedadesComponent implements OnInit {
         this.programaciones = data.map(item => ({
           id: item.tRuc, // Use RUC as ID
           ruc: item.tRuc,
+          codigoSap: item.tCodigoSap,
           razonSocial: item.tRazonSocial,
           usuarioSunat: item.tUsuario,
           claveSol: item.tClave,
@@ -64,6 +80,7 @@ export class SociedadesComponent implements OnInit {
     this.isModalOpen = true;
     this.newProgramacion = {
       ruc: '',
+      codigoSap: '',
       razonSocial: '',
       usuarioSunat: '',
       claveSol: '',
@@ -80,11 +97,25 @@ export class SociedadesComponent implements OnInit {
     // Clone data to avoid direct mutation of table row before saving
     this.newProgramacion = {
       ruc: item.ruc,
+      codigoSap: item.codigoSap || '',
       razonSocial: item.razonSocial,
       usuarioSunat: item.usuarioSunat,
       claveSol: item.claveSol,
-      estado: item.estado
+      estado: item.estado,
+      selectedSapAccount: null
     };
+    
+    // Load associated SAP account
+    this.sociedadService.getSociedadSapAccounts(item.ruc).subscribe({
+      next: (accounts) => {
+        if (accounts && accounts.length > 0) {
+          // Assuming one account per society for now, take the first one
+          this.newProgramacion.selectedSapAccount = accounts[0].iMSAP;
+        }
+      },
+      error: (err) => console.error('Error loading associated SAP account:', err)
+    });
+
     this.showModalClave = false;
   }
 
@@ -147,6 +178,7 @@ export class SociedadesComponent implements OnInit {
     // Map to backend format
     const payload = {
       tRuc: this.newProgramacion.ruc,
+      tCodigoSap: this.newProgramacion.codigoSap,
       tRazonSocial: this.newProgramacion.razonSocial,
       tUsuario: this.newProgramacion.usuarioSunat,
       tClave: this.newProgramacion.claveSol,
@@ -158,6 +190,16 @@ export class SociedadesComponent implements OnInit {
       this.sociedadService.update(this.currentRucToEdit, payload).subscribe({
         next: (res) => {
           console.log('Sociedad actualizada:', res);
+          
+          // Associate SAP Account if selected
+          if (this.newProgramacion.selectedSapAccount) {
+            this.sociedadService.associateSapAccount(this.currentRucToEdit, this.newProgramacion.selectedSapAccount)
+              .subscribe({
+                next: () => console.log('Cuenta SAP asociada'),
+                error: (e) => console.error('Error asociando SAP:', e)
+              });
+          }
+
           this.showSuccess('Sociedad actualizada correctamente.');
           this.loadSociedades(); // Refresh list
           this.closeModal();
@@ -172,6 +214,16 @@ export class SociedadesComponent implements OnInit {
       this.sociedadService.create(payload).subscribe({
         next: (res) => {
           console.log('Sociedad creada:', res);
+
+          // Associate SAP Account if selected
+          if (this.newProgramacion.selectedSapAccount) {
+            this.sociedadService.associateSapAccount(this.newProgramacion.ruc, this.newProgramacion.selectedSapAccount)
+              .subscribe({
+                next: () => console.log('Cuenta SAP asociada'),
+                error: (e) => console.error('Error asociando SAP:', e)
+              });
+          }
+
           this.showSuccess('Sociedad creada correctamente.');
           this.loadSociedades(); // Refresh list
           this.closeModal();

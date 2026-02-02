@@ -1,0 +1,320 @@
+<div class="config-page" [class.dashboard-layout]="isInsideDashboard">
+  
+  <!-- Standard Page Header (Dashboard Only) -->
+  <div class="page-header" *ngIf="isInsideDashboard">
+    <h1 class="page-title">Configuración SAP/SUNAT</h1>
+    <p class="page-subtitle">Ajusta los parámetros de conexión y ejecución para el Bot.</p>
+  </div>
+
+  <div class="config-card" [class.dashboard-card]="isInsideDashboard">
+    
+
+    <div *ngIf="errorMessage || successMessage" class="toast-notification" [class.success]="successMessage && !errorMessage">
+      <div class="toast-content">
+        <div class="toast-icon">
+
+          <svg *ngIf="errorMessage" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+
+          <svg *ngIf="successMessage && !errorMessage" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <div class="toast-text">
+          <h4 class="toast-title">{{ errorMessage ? 'Error' : 'Éxito' }}</h4>
+          <p class="toast-message">{{ errorMessage || successMessage }}</p>
+        </div>
+        <button class="toast-close" (click)="errorMessage = ''; successMessage = ''">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+    
+    <div class="config-nav" *ngIf="!isInsideDashboard">
+        <button class="btn-back-login" (click)="backToLogin()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Regresar al Login
+        </button>
+    </div>
+
+    <!-- Sección Superior: Imagen/Visual si NO está en Dashboard -->
+    <div class="config-visual" *ngIf="!isInsideDashboard">
+      <div class="visual-content">
+        <h2>Configuración</h2>
+        <p>Ajusta los parámetros de conexión para el Bot.</p>
+      </div>
+      <div class="visual-overlay"></div>
+    </div>
+
+    <!-- Sección Inferior: Formulario de Configuración -->
+    <div class="config-content-container" [class.dashboard-mode]="isInsideDashboard">
+      <div class="config-animated-content">
+        
+        <div class="config-split">
+          <!-- Sección SUNAT -->
+          <div class="config-section sunat-section">
+            <div class="section-logo">
+              <img src="assets/images/logo-sunat.svg" alt="Logo SUNAT">
+            </div>
+            <h3>Configuración SUNAT</h3>
+            
+            <div class="form-group">
+              <label>RUC</label>
+              <input type="text" [(ngModel)]="configData.sunat.ruc" placeholder="Ingrese RUC" maxlength="11">
+            </div>
+            <div class="form-group">
+              <label>Usuario SOL</label>
+              <input type="text" [(ngModel)]="configData.sunat.usuario" placeholder="Usuario SOL">
+            </div>
+            <div class="form-group password-group">
+              <label>Clave SOL</label>
+              <div class="input-wrapper">
+                <input [type]="showSolPassword ? 'text' : 'password'" [(ngModel)]="configData.sunat.claveSol" placeholder="Clave SOL">
+                <button type="button" class="btn-toggle-password" (click)="showSolPassword = !showSolPassword">
+                  <svg *ngIf="!showSolPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg *ngIf="showSolPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección SAP -->
+          <div class="config-section sap-section">
+            <div class="section-logo">
+              <img src="assets/images/logo-sap.png" alt="Logo SAP">
+            </div>
+            <h3>Configuración SAP</h3>
+
+            <div class="form-group">
+              <label>Usuario SAP</label>
+              <input type="text" [(ngModel)]="configData.sap.usuario" placeholder="usuario@empresa.com">
+            </div>
+            <div class="form-group password-group">
+              <label>Contraseña</label>
+              <div class="input-wrapper">
+                <input [type]="showSapPassword ? 'text' : 'password'" [(ngModel)]="configData.sap.password" placeholder="Contraseña SAP">
+                <button type="button" class="btn-toggle-password" (click)="showSapPassword = !showSapPassword">
+                  <svg *ngIf="!showSapPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg *ngIf="showSapPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección General (Nueva) -->
+          <div class="config-section general-section">
+            <div class="section-logo">
+               <!-- Icono genérico para parámetros -->
+               <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#2c3e50" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </div>
+            <h3>Parámetros</h3>
+
+
+
+            <div class="form-group">
+              <label>Sociedad</label>
+              <div class="custom-select-wrapper">
+                <!-- Backdrop transparente para cerrar al hacer click fuera -->
+                <div *ngIf="isDropdownOpen" class="dropdown-backdrop" (click)="isDropdownOpen = false"></div>
+                
+                <div class="custom-select-container" [class.open]="isDropdownOpen">
+                  <div class="custom-select-header" (click)="toggleDropdown()" [class.placeholder]="!configData.general.sociedad">
+                    <span>{{ getSelectedSociedadName() }}</span>
+                    <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                  
+                  <div class="custom-select-body" *ngIf="isDropdownOpen">
+                    <div class="search-container">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#95a5a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <input type="text" [(ngModel)]="searchTerm" (input)="filterSociedades()" placeholder="Buscar sociedad..." (click)="$event.stopPropagation()">
+                    </div>
+                    <ul class="options-list">
+                      <li *ngFor="let soc of filteredSociedades" (click)="selectSociedad(soc)" [class.selected]="soc.id === configData.general.sociedad">
+                        {{ soc.name }}
+                      </li>
+                      <li *ngIf="filteredSociedades.length === 0" class="no-results">
+                        No se encontraron resultados
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Fecha de Ejecución</label>
+              <div class="custom-select-wrapper custom-date-wrapper">
+                <div *ngIf="isCalendarOpen" class="dropdown-backdrop" (click)="isCalendarOpen = false"></div>
+                
+                <div class="custom-select-container" [class.open]="isCalendarOpen">
+                  <div class="custom-select-header" (click)="toggleCalendar()" [class.placeholder]="!configData.general.fecha">
+                    <span>{{ getFormattedDate() }}</span>
+                    <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </div>
+                  
+                  <div class="custom-select-body calendar-popup" [class.visible]="isCalendarOpen" (click)="$event.stopPropagation()">
+                    <div class="calendar-header">
+                      <button type="button" (click)="changeMonth(-1, $event)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      </button>
+                      <span>{{ months[currentCalendarDate.getMonth()] }} {{ currentCalendarDate.getFullYear() }}</span>
+                      <button type="button" (click)="changeMonth(1, $event)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                    </div>
+                    
+                    <div class="calendar-weekdays">
+                      <div *ngFor="let day of weekDays">{{ day }}</div>
+                    </div>
+                    
+                    <div class="calendar-grid">
+                      <div *ngFor="let dayObj of daysInMonth" 
+                           class="calendar-day" 
+                           [class.other-month]="!dayObj.currentMonth"
+                           (click)="selectDate(dayObj)">
+                        {{ dayObj.day }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+                <label>Carpeta de Salida (Ruta en Servidor)</label>
+                <div class="input-wrapper" style="display: flex; gap: 10px;">
+                    <input type="text" [(ngModel)]="configData.general.folder" placeholder="Ej: C:\Salida">
+                    <button class="btn-action-icon btn-download" 
+                            (click)="selectFolder()"
+                            title="Abrir selector (Solo funciona en el servidor)"
+                            style="width: auto; padding: 0 15px; margin: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botones de Acción (Movidos aquí al final de la última tarjeta) -->
+            <div class="action-buttons-group">
+                <button class="btn-action-icon btn-save" (click)="saveConfig()" style="width: 100%;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Procesar
+                </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal de Navegador de Archivos (Nuevo) -->
+  <div *ngIf="isBrowserModalOpen" class="modal-backdrop">
+    <div class="modal-card browser-modal" style="max-width: 600px; width: 90%;">
+      <div class="modal-header">
+        <h3>Seleccionar Carpeta en Servidor</h3>
+        <button class="modal-close-btn" (click)="closeBrowser()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      
+      <div class="browser-body" style="padding: 20px;">
+        <div class="current-path" style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; font-family: monospace; word-break: break-all;">
+            {{ browserCurrentPath }}
+        </div>
+
+        <div class="browser-controls" style="margin-bottom: 10px;">
+            <button class="btn-secondary" (click)="navigateParent()" [disabled]="!browserCurrentPath || browserCurrentPath.length <= 3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                Subir Nivel
+            </button>
+        </div>
+
+        <div class="folder-list" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+            <div *ngIf="browserLoading" style="padding: 20px; text-align: center; color: #666;">
+                Cargando...
+            </div>
+            
+            <div *ngFor="let folder of browserFolders" 
+                 class="folder-item" 
+                 (click)="navigateTo(folder)"
+                 style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#ffd700" stroke="currentColor" stroke-width="1"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                {{ folder }}
+            </div>
+
+            <div *ngIf="!browserLoading && browserFolders.length === 0" style="padding: 20px; text-align: center; color: #999;">
+                Carpeta vacía o sin subcarpetas visibles.
+            </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeBrowser()">Cancelar</button>
+        <button class="btn-confirm" (click)="selectCurrentFolder()">Seleccionar esta carpeta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación -->
+  <div *ngIf="isConfirmModalOpen" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Confirmar Parámetros</h3>
+        <button class="modal-close-btn" (click)="cancelProcess()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro">Por favor verifica que los datos sean correctos antes de iniciar el proceso.</p>
+        
+        <div class="summary-group">
+          <h4>Datos SUNAT</h4>
+          <div class="summary-item">
+            <span class="label">RUC:</span>
+            <span class="value">{{ configData.sunat.ruc }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Usuario:</span>
+            <span class="value">{{ configData.sunat.usuario }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Clave SOL:</span>
+            <span class="value">{{ configData.sunat.claveSol ? '******' : 'No definida' }}</span>
+          </div>
+        </div>
+
+        <div class="summary-group">
+          <h4>Datos SAP</h4>
+          <div class="summary-item">
+            <span class="label">Usuario:</span>
+            <span class="value">{{ configData.sap.usuario }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Contraseña:</span>
+            <span class="value">{{ configData.sap.password ? '******' : 'No definida' }}</span>
+          </div>
+        </div>
+
+        <div class="summary-group">
+          <h4>Configuración General</h4>
+          <div class="summary-item">
+            <span class="label">Sociedad:</span>
+            <span class="value">{{ getSelectedSociedadName() }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Fecha:</span>
+            <span class="value">{{ getFormattedDate() }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Carpeta:</span>
+            <span class="value folder-path" [title]="configData.general.folder">{{ configData.general.folder }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cancelProcess()">Cancelar</button>
+        <button class="btn-confirm" (click)="confirmProcess()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Confirmar y Procesar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

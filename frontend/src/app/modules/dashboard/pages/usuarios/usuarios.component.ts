@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { UsuarioService } from '../../../../services/usuario.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -8,40 +9,9 @@ import { Component, OnInit } from '@angular/core';
 export class UsuariosComponent implements OnInit {
   
   // Updated model based on user image
-  usuarios = [
-    {
-      id: 1,
-      nombreCompleto: 'Martín Alejandro García Pérez',
-      correo: 'MARTIN.GARCÍA@GMAIL.COM',
-      clave: '123456',
-      rol: 'Administrador',
-      notificaciones: true,
-      estado: true,
-      showClave: false
-    },
-    {
-      id: 2,
-      nombreCompleto: 'Martín Alejandro García Pérez',
-      correo: 'MARTIN.GARCÍA@GMAIL.COM',
-      clave: '123456',
-      rol: 'Usuario',
-      notificaciones: true,
-      estado: true,
-      showClave: false
-    },
-    {
-      id: 3,
-      nombreCompleto: 'Martín Alejandro García Pérez',
-      correo: 'MARTIN.GARCÍA@GMAIL.COM',
-      clave: '123456',
-      rol: 'Usuario',
-      notificaciones: false,
-      estado: true,
-      showClave: false
-    }
-  ];
+  usuarios: any[] = [];
 
-  filteredUsuarios = [...this.usuarios];
+  filteredUsuarios: any[] = [];
   searchTerm: string = '';
   selectedStatus: string = 'TODOS';
 
@@ -49,6 +19,14 @@ export class UsuariosComponent implements OnInit {
   isModalOpen: boolean = false;
   showModalClave: boolean = false;
   
+  // Delete Modal Logic
+  isDeleteModalOpen: boolean = false;
+  itemToDelete: any = null;
+
+  // Toast Logic
+  errorMessage: string = '';
+  successMessage: string = '';
+
   newUsuario = {
     nombres: '',
     apellidos: '',
@@ -59,9 +37,31 @@ export class UsuariosComponent implements OnInit {
     estado: true
   };
 
-  constructor() { }
+  constructor(private usuarioService: UsuarioService) { }
 
   ngOnInit(): void {
+    this.loadUsuarios();
+  }
+
+  loadUsuarios(): void {
+    this.usuarioService.getAll().subscribe({
+      next: (data) => {
+        this.usuarios = data.map(u => ({
+          id: u.iMusuario,
+          nombreCompleto: `${u.tNombre} ${u.tApellidos}`,
+          correo: u.tCorreo,
+          clave: u.tClave,
+          rol: u.iMRol === 1 ? 'Administrador' : 'Usuario', // TODO: Fetch roles dynamically if needed
+          notificaciones: u.lNotificacion,
+          estado: u.lActivo,
+          showClave: false
+        }));
+        this.filterData();
+      },
+      error: (err) => {
+        console.error('Error loading usuarios:', err);
+      }
+    });
   }
 
   openModal(): void {
@@ -92,8 +92,68 @@ export class UsuariosComponent implements OnInit {
   }
 
   saveUsuario(): void {
-    console.log('Guardando usuario...', this.newUsuario);
-    this.closeModal();
+    // 1. Validar campos obligatorios
+    if (!this.newUsuario.nombres || !this.newUsuario.apellidos || !this.newUsuario.correo || !this.newUsuario.clave || !this.newUsuario.rol) {
+        this.showError('Por favor complete todos los campos obligatorios (Nombres, Apellidos, Correo, Rol y Clave).');
+        return;
+    }
+
+    // 2. Validar formato de correo (debe tener @)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Simple check as requested: "debe de tener (@)" - but standard regex is safer.
+    // However, sticking to strict request: must have '@'.
+    // If I use standard regex, it covers '@'.
+    if (!this.newUsuario.correo.includes('@')) {
+         this.showError('El correo electrónico debe contener el símbolo "@".');
+         return;
+    }
+    // Optional: More strict email validation
+    if (!emailRegex.test(this.newUsuario.correo)) {
+         this.showError('Por favor ingrese un correo electrónico válido.');
+         return;
+    }
+
+    // 3. Validar complejidad de contraseña
+    // Min 8 chars, 1 uppercase, 1 symbol
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(this.newUsuario.clave);
+    const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(this.newUsuario.clave); // Common symbols
+
+    if (this.newUsuario.clave.length < minLength) {
+        this.showError('La contraseña debe tener al menos 8 caracteres.');
+        return;
+    }
+    if (!hasUpperCase) {
+        this.showError('La contraseña debe tener al menos una letra mayúscula.');
+        return;
+    }
+    if (!hasSymbol) {
+        this.showError('La contraseña debe tener al menos un símbolo (ej. !@#$%).');
+        return;
+    }
+
+    const payload = {
+        tNombre: this.newUsuario.nombres,
+        tApellidos: this.newUsuario.apellidos,
+        tCorreo: this.newUsuario.correo,
+        tClave: this.newUsuario.clave,
+        iMRol: this.newUsuario.rol === 'Administrador' ? 1 : 2,
+        lNotificacion: this.newUsuario.notificaciones,
+        lActivo: this.newUsuario.estado
+    };
+
+    this.usuarioService.create(payload).subscribe({
+        next: (res) => {
+            console.log('Usuario creado', res);
+            this.showSuccess('Usuario creado correctamente.');
+            this.loadUsuarios();
+            this.closeModal();
+        },
+        error: (err) => {
+            console.error('Error creando usuario', err);
+            this.showError('Error al crear usuario: ' + (err.error?.detail || err.message));
+        }
+    });
   }
 
   filterData(): void {
@@ -125,5 +185,52 @@ export class UsuariosComponent implements OnInit {
   toggleStatus(item: any): void {
     item.estado = !item.estado;
     console.log(`Status toggled for ${item.nombreCompleto}: ${item.estado}`);
+  }
+
+  openDeleteModal(item: any): void {
+    this.itemToDelete = item;
+    this.isDeleteModalOpen = true;
+  }
+
+  closeDeleteModal(): void {
+    this.isDeleteModalOpen = false;
+    this.itemToDelete = null;
+  }
+
+  confirmDelete(): void {
+    if (!this.itemToDelete) return;
+    
+    this.usuarioService.delete(this.itemToDelete.id).subscribe({
+      next: () => {
+        console.log(`User ${this.itemToDelete.nombreCompleto} deleted`);
+        this.showSuccess('Usuario eliminado correctamente.');
+        this.loadUsuarios(); // Reload data from server
+        this.closeDeleteModal();
+      },
+      error: (err) => {
+        console.error('Error deleting user:', err);
+        this.showError('Error al eliminar usuario.');
+        this.closeDeleteModal();
+      }
+    });
+  }
+
+  showError(message: string) {
+    this.successMessage = '';
+    this.errorMessage = message;
+    this.triggerToastTimeout();
+  }
+
+  showSuccess(message: string) {
+    this.errorMessage = '';
+    this.successMessage = message;
+    this.triggerToastTimeout();
+  }
+
+  triggerToastTimeout() {
+    setTimeout(() => {
+      this.errorMessage = '';
+      this.successMessage = '';
+    }, 4000);
   }
 }

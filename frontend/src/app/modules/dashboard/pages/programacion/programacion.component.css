@@ -800,3 +800,110 @@ tbody tr:hover td {
 .btn-save:hover {
   background-color: #0097d1;
 }
+
+/* --- New Styles for Contextual Config --- */
+
+.society-item-wrapper {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+  /* Ensure it wraps content nicely */
+}
+
+.society-item-wrapper:last-child {
+  border-bottom: none;
+}
+
+.society-item-wrapper.selected {
+  background-color: #f0f9ff;
+}
+
+.sunat-status {
+    margin-left: auto;
+}
+
+.badge-sunat {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    border: 1px solid #c8e6c9;
+}
+
+/* SAP Selector Styles */
+.sap-account-selector {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    margin-left: 2.2rem; /* Align with text, skipping checkbox */
+    margin-right: 0.5rem;
+    background-color: white;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e1f5fe;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+}
+
+.sap-selector-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #0277bd;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.sap-select {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #b3e5fc;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #0277bd;
+    outline: none;
+    cursor: pointer;
+    background-color: white;
+}
+
+.sap-select:focus {
+    box-shadow: 0 0 0 2px rgba(2, 119, 189, 0.1);
+}
+
+.sap-loading, .sap-warning {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+.sap-warning {
+    color: #f39c12;
+}
+
+/* Action Buttons Container */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Delete Button */
+.btn-icon-delete {
+  background: none;
+  border: none;
+  color: #e74c3c; /* Red color */
+  cursor: pointer;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-icon-delete:hover {
+  color: #c0392b;
+  background-color: #fceceb; /* Light red background */
+  border-radius: 50%;
+}

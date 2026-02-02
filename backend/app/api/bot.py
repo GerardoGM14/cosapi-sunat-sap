@@ -13,7 +13,7 @@ class SunatConfig(BaseModel):
     claveSol: str
 
 class SapConfig(BaseModel):
-    email: str
+    usuario: str
     password: str
 
 class GeneralConfig(BaseModel):
@@ -27,7 +27,10 @@ class BotConfig(BaseModel):
     general: GeneralConfig
 
 @router.post("/run")
-async def run_bot(config: BotConfig):
+async def run_bot_endpoint(config: BotConfig):
+    return await run_bot_logic(config)
+
+async def run_bot_logic(config: BotConfig):
     try:
         # Validar carpeta
         if not config.general.folder:
@@ -61,14 +64,8 @@ async def run_bot(config: BotConfig):
         # Prioridad 2: .venv del backend (actualmente en uso)
         # Prioridad 3: sys.executable actual
         
-        # Como el usuario indica que "el .venv tambien tiene que ser del app.py", 
-        # asumimos que debemos usar el entorno virtual del backend porque sunat-sap-service NO tiene .venv propio visible en LS.
-        # Pero nos aseguramos de usar el python.exe del entorno virtual explícitamente.
-        
-        # Si estamos corriendo en un venv, sys.prefix apunta a él.
         python_executable = sys.executable
         
-        # Si quisiéramos forzar un venv específico en sunat-sap-service (si el usuario lo crea luego):
         possible_service_venv = os.path.join(service_dir, ".venv", "Scripts", "python.exe")
         if os.path.exists(possible_service_venv):
             python_executable = possible_service_venv
@@ -99,9 +96,7 @@ async def run_bot(config: BotConfig):
                     env["DISPLAY"] = display_from_env
                     print(f"ℹ️ Usando DISPLAY desde .env: {display_from_env}")
                 else:
-                    # Fallback por defecto. CAMBIO: Usamos :1 como primera opción dado el reporte del usuario.
-                    # Idealmente probaríamos ambos, pero subprocess necesita uno fijo.
-                    # El usuario reportó que su pantalla es :1.
+                    # Fallback por defecto.
                     print("⚠️ Variable DISPLAY no encontrada o vacía. Asignando DISPLAY=:1 (predeterminado para este servidor)")
                     env["DISPLAY"] = ":1"
                 
@@ -121,102 +116,44 @@ async def run_bot(config: BotConfig):
             else:
                 print(f"ℹ️ Usando DISPLAY existente: {env['DISPLAY']}")
         
-        # Intentar dar permisos con xhost (solo si tenemos DISPLAY)
-        if sys.platform == "linux" and env.get("DISPLAY"):
-            try:
-                # Ejecutar xhost +local: para permitir conexiones locales
-                # Usamos el mismo entorno con XAUTHORITY configurado
-                subprocess.run(["xhost", "+local:"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-                print("ℹ️ Intenté ejecutar 'xhost +local:' para dar permisos gráficos.")
-            except Exception as e:
-                print(f"⚠️ No se pudo ejecutar xhost: {e}")
+            # Intentar dar permisos con xhost (solo si tenemos DISPLAY)
+            if env.get("DISPLAY"):
+                try:
+                    subprocess.run(["xhost", "+local:"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+                except Exception as e:
+                    print(f"⚠️ No se pudo ejecutar xhost: {e}")
 
 
-        # Normalizar ruta a formato Windows (backslashes) para evitar problemas y cumplir con preferencia de usuario
+        # Normalizar ruta a formato Windows (backslashes)
         folder_path = os.path.normpath(config.general.folder)
 
-        # Construct command with CLI arguments as requested
-        # NOTA: subprocess.Popen con lista maneja el quoting automáticamente para el sistema operativo.
-        # No debemos añadir comillas extra a los valores aquí o llegarán duplicadas (ej: '"valor"').
-        cmd_args = [
+        # Construir argumentos para CLI
+        args = [
             python_executable,
             script_path,
             "--folder", folder_path,
-            "--code_sociedad", config.general.sociedad,
-            "--date", config.general.fecha,
-            "--ruc_sunat", config.sunat.ruc,
-            "--user_sunat", config.sunat.usuario,
-            "--password_sunat", config.sunat.claveSol,
-            "--correo_sap", config.sap.email,
-            "--password_sap", config.sap.password
+            "--fecha", config.general.fecha,
+            "--ruc", config.sunat.ruc,
+            "--usuario-sunat", config.sunat.usuario,
+            "--clave-sunat", config.sunat.claveSol,
+            "--usuario-sap", config.sap.usuario,
+            "--password-sap", config.sap.password,
+            "--sociedad", config.general.sociedad
         ]
-
-        # Convert to string for display (masking nothing as requested "deberia de verse la clave")
-        # Forzamos comillas en el LOG para que el usuario pueda copiar y pegar el comando en terminal Windows
-        def quote_for_log(arg):
-            # Si empieza con -- o es el ejecutable/script, lo dejamos igual (a menos que tenga espacios)
-            if arg.startswith("--") or arg == python_executable or arg == script_path:
-                if " " in arg: return f'"{arg}"'
-                return arg
-            # Para los valores, forzamos comillas para asegurar formato "C:\Ruta"
-            return f'"{arg}"'
-
-        full_command_str = " ".join([quote_for_log(arg) for arg in cmd_args])
-
-        # Archivo de logs
-        log_file_path = os.path.join(service_dir, "bot_execution.log")
         
-        print("\n" + "="*60)
-        print("🚀 COMANDO DE EJECUCIÓN (VISIBLE EN TERMINAL):")
-        print("="*60)
-        print(f"📂 CWD (Directorio de trabajo): {service_dir}")
-        print(f"🐍 Python Executable          : {python_executable}")
-        print(f"📝 Log File                   : {log_file_path}")
-        print(full_command_str)
-        print("="*60)
+        print(f"🚀 Ejecutando bot: {' '.join(args)}")
         
-        # Abrir archivo de log en modo append
-        log_file = open(log_file_path, "w", encoding="utf-8")
-        
-        # Escribir cabecera en el log
-        log_file.write(f"--- START EXECUTION: {config.general.fecha} ---\n")
-        log_file.write(f"Command: {full_command_str}\n")
-        
-        # Debug: Log environment variables relevant to display
-        if sys.platform == "linux":
-            log_file.write(f"DEBUG ENV: DISPLAY={env.get('DISPLAY')}\n")
-            log_file.write(f"DEBUG ENV: XAUTHORITY={env.get('XAUTHORITY')}\n")
-            log_file.write(f"DEBUG ENV: USER={env.get('USER')}\n")
-            
-        log_file.write("-" * 50 + "\n")
-        log_file.flush()
-
-        # Ejecutar en segundo plano redirigiendo salida al archivo
         process = subprocess.Popen(
-            cmd_args,
-            cwd=service_dir, # IMPORTANTE: Ejecutar desde la carpeta del servicio
+            args,
+            cwd=service_dir,
             env=env,
-            text=True,
-            stdout=log_file,
-            stderr=subprocess.STDOUT # Redirigir stderr a stdout (mismo archivo)
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
         )
         
-        # No cerramos log_file aquí inmediatamente porque el proceso lo usa,
-        # pero como es Popen, el file handle se pasa al proceso hijo.
-        # Sin embargo, en Python, si cerramos el handle en el padre, el hijo sigue teniendo acceso?
-        # Sí, pero para estar seguros y evitar ResourceWarning, podemos dejarlo que el GC lo maneje 
-        # o simplemente confiar en que subprocess duplica el descriptor.
-        # Lo correcto es no cerrarlo explícitamente si queremos seguir escribiendo desde el padre, 
-        # pero aquí ya no escribimos más.
-        # De hecho, subprocess.Popen toma el file descriptor.
+        return {"message": "Bot iniciado correctamente", "pid": process.pid}
         
-        return {
-            "status": "success", 
-            "message": "El proceso ha iniciado correctamente. Revise bot_execution.log para detalles.", 
-            "pid": process.pid,
-            "log_file": log_file_path
-        }
-
     except Exception as e:
-        print(f"Error running bot: {e}")
+        print(f"Error ejecutando bot: {e}")
         raise HTTPException(status_code=500, detail=str(e))

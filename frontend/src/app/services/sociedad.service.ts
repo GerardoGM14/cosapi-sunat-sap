@@ -5,6 +5,7 @@ import { AppConfigService } from './app-config.service';
 
 export interface Sociedad {
   tRuc: string;
+  tCodigoSap?: string;
   tRazonSocial: string;
   tUsuario: string;
   tClave: string;
@@ -44,5 +45,18 @@ export class SociedadService {
   
   delete(ruc: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/sociedades/${ruc}`);
+  }
+
+  // SAP Association Methods
+  getAllSapAccounts(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/sap-accounts`);
+  }
+
+  getSociedadSapAccounts(ruc: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/sociedades/${ruc}/sap-accounts`);
+  }
+
+  associateSapAccount(ruc: string, sapId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/sociedades/${ruc}/sap-accounts/${sapId}`, {});
   }
 }

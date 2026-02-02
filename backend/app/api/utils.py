@@ -1,8 +1,14 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends
 import subprocess
 import os
 import sys
+import json
+from pydantic import BaseModel
 from dotenv import dotenv_values
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models import MSap
+from datetime import datetime
 
 router = APIRouter()
 
@@ -107,4 +113,71 @@ async def select_folder():
         
     except Exception as e:
         print(f"Error selecting folder: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- SAP Configuration Endpoints ---
+
+class SapConfig(BaseModel):
+    usuario: str
+    password: str
+
+def get_service_params_dir():
+    current_dir = os.getcwd()
+    # Logic to find sunat-sap-service
+    possible_service_dir = os.path.abspath(os.path.join(current_dir, "..", "sunat-sap-service"))
+    if not os.path.exists(possible_service_dir):
+         possible_service_dir = os.path.abspath(os.path.join(current_dir, "sunat-sap-service"))
+    
+    params_dir = os.path.join(possible_service_dir, "src", "parameters")
+    os.makedirs(params_dir, exist_ok=True)
+    return params_dir
+
+@router.get("/config/sap")
+async def get_sap_config():
+    try:
+        params_dir = get_service_params_dir()
+        file_path = os.path.join(params_dir, "sap_config.json")
+        
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        else:
+            return {"usuario": "", "password": ""}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/config/sap")
+async def save_sap_config(config: SapConfig, db: Session = Depends(get_db)):
+    try:
+        # 1. Guardar en JSON (Compatibilidad)
+        params_dir = get_service_params_dir()
+        file_path = os.path.join(params_dir, "sap_config.json")
+        
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(config.dict(), f, indent=4)
+            
+        # 2. Guardar en BD (MSap)
+        # Buscar si ya existe este usuario
+        db_sap = db.query(MSap).filter(MSap.tUsuario == config.usuario).first()
+        
+        if db_sap:
+            # Actualizar
+            db_sap.tClave = config.password
+            db_sap.fModificacion = datetime.utcnow()
+            db_sap.lActivo = True
+        else:
+            # Crear nuevo
+            new_sap = MSap(
+                tUsuario=config.usuario,
+                tClave=config.password,
+                lActivo=True,
+                fRegistro=datetime.utcnow()
+            )
+            db.add(new_sap)
+            
+        db.commit()
+            
+        return {"status": "success", "message": "Configuración SAP guardada en archivo y base de datos"}
+    except Exception as e:
+        print(f"Error saving SAP config: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,0 +1,116 @@
+from sqlalchemy.orm import Session
+from datetime import datetime
+from app.models import MProgramacion, MProgramacionSociedad, MSociedad, MSap, MSapSociedad, DEjecucion
+from app.api.bot import run_bot_logic, BotConfig, SunatConfig, SapConfig, GeneralConfig
+import logging
+
+logger = logging.getLogger(__name__)
+
+async def execute_programacion_logic(db: Session, programacion_id: int, ruc: str | None = None, manual_user_id: int | None = None):
+    """
+    Ejecuta la lógica de una programación para uno o todos los RUCs asociados.
+    """
+    prog = db.query(MProgramacion).filter(MProgramacion.iMProgramacion == programacion_id).first()
+    if not prog:
+        logger.error(f"Programación {programacion_id} no encontrada")
+        return []
+    
+    # Identify target RUCs
+    target_rucs = []
+    if ruc:
+        target_rucs = [ruc]
+    else:
+        # All associated RUCs
+        rels = db.query(MProgramacionSociedad).filter(MProgramacionSociedad.iMProgramacion == programacion_id).all()
+        target_rucs = [r.tRuc for r in rels]
+        
+    return await execute_sociedad_logic(db, target_rucs, manual_user_id)
+
+async def execute_sociedad_logic(db: Session, target_rucs: list[str], manual_user_id: int | None = None, date_str: str | None = None):
+    """
+    Lógica core de ejecución para una lista de RUCs.
+    Puede ser llamada desde una programación o ejecución manual directa.
+    """
+    created_executions = []
+    
+    # Default date if not provided
+    if not date_str:
+        date_str = datetime.now().strftime("%d/%m/%Y")
+
+    for target_ruc in target_rucs:
+        try:
+            # 1. Get Society Info
+            sociedad = db.query(MSociedad).filter(MSociedad.tRuc == target_ruc).first()
+            if not sociedad:
+                logger.warning(f"Sociedad {target_ruc} no encontrada, saltando...")
+                continue
+                
+            # 2. Get Associated SAP Account (Active)
+            # We pick the first active one
+            sap_rel = db.query(MSapSociedad).filter(
+                MSapSociedad.tRuc == target_ruc, 
+                MSapSociedad.lActivo == True
+            ).first()
+            
+            sap_account = None
+            if sap_rel:
+                sap_account = db.query(MSap).filter(MSap.iMSAP == sap_rel.iMSAP).first()
+                
+            if not sap_account:
+                logger.warning(f"No hay cuenta SAP activa asociada a {target_ruc}, saltando...")
+                # We might want to record a failed execution or log it
+                continue
+                
+            # 3. Create Execution Record (DEjecucion)
+            new_exec = DEjecucion(
+                tTipo='M' if manual_user_id else 'A', # Manual or Automatic
+                tRuc=target_ruc,
+                iMSAP=sap_account.iMSAP,
+                fRegistro=datetime.utcnow(),
+                iUsuarioEjecucion=manual_user_id,
+                # Other fields can be null or defaults
+            )
+            db.add(new_exec)
+            db.commit()
+            db.refresh(new_exec)
+            created_executions.append(new_exec.iMEjecucion)
+            
+            # 4. Prepare Bot Config
+            # Handle potential None values safely
+            sunat_user = sociedad.tUsuario or ""
+            sunat_pass = sociedad.tClave or ""
+            sap_user = sap_account.tUsuario or ""
+            sap_pass = sap_account.tClave or ""
+            soc_name = sociedad.tRazonSocial or target_ruc
+            
+            # Use timestamped folder
+            folder_name = f"Descargas_{target_ruc}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            # Use absolute path for folder to avoid ambiguity
+            base_download_dir = r"C:\AutoSUN_Descargas" # Example fixed path or config
+            full_folder_path = f"{base_download_dir}\\{folder_name}"
+
+            config = BotConfig(
+                sunat=SunatConfig(
+                    ruc=target_ruc,
+                    usuario=sunat_user,
+                    claveSol=sunat_pass
+                ),
+                sap=SapConfig(
+                    usuario=sap_user,
+                    password=sap_pass
+                ),
+                general=GeneralConfig(
+                    sociedad=soc_name,
+                    fecha=date_str,
+                    folder=full_folder_path
+                )
+            )
+            
+            # 5. Launch Bot
+            await run_bot_logic(config)
+            
+        except Exception as e:
+            logger.error(f"Error executing for RUC {target_ruc}: {e}")
+            
+    return created_executions

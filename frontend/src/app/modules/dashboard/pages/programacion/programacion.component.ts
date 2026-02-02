@@ -1,4 +1,19 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { AppConfigService } from '../../../../services/app-config.service';
+
+interface Sociedad {
+  id: string; // tCodigoSap or tRuc
+  name: string; // tRazonSocial
+  ruc: string; // tRuc
+  tUsuario?: string; // SUNAT user
+  tClave?: string; // SUNAT pass
+  selected: boolean;
+  hasSunatCredentials: boolean;
+  sapAccounts: any[];
+  selectedSapAccount?: any;
+  loadingSap?: boolean;
+}
 
 @Component({
   selector: 'app-programacion',
@@ -7,48 +22,20 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ProgramacionComponent implements OnInit {
   
-  // Dummy data based on the image and related to Ejecuciones
-  programaciones = [
-    {
-      id: 1,
-      nombre: 'Sincronización Nocturna SAP',
-      hora: '18:29',
-      dias: ['Lun', 'Mar', 'Mier', 'Juev'],
-      sociedades: 14,
-      estado: true // true for active (blue toggle), false for inactive
-    },
-    {
-      id: 2,
-      nombre: 'Sincronización Nocturna SAP', // Example of repeating name with different schedule
-      hora: '18:29',
-      dias: ['Lun', 'Mar', 'Juev'],
-      sociedades: 14,
-      estado: true
-    },
-    {
-      id: 3,
-      nombre: 'Cierre Diario',
-      hora: '23:00',
-      dias: ['Lun', 'Mar', 'Mier', 'Juev', 'Vier'],
-      sociedades: 5,
-      estado: false
-    },
-    {
-      id: 4,
-      nombre: 'Reporte Semanal de Ventas',
-      hora: '08:00',
-      dias: ['Lun'],
-      sociedades: 10,
-      estado: true
-    }
-  ];
+  // Data will be loaded from backend
+  programaciones: any[] = [];
 
-  filteredProgramaciones = [...this.programaciones];
+  filteredProgramaciones: any[] = [];
   searchTerm: string = '';
   selectedStatus: string = 'TODOS';
 
   // Modal Logic
   isModalOpen: boolean = false;
+  isDeleteModalOpen: boolean = false;
+  isConfirmModalOpen: boolean = false;
+  itemToDelete: any = null;
+  pendingPayload: any = null;
+  pendingSociedadesDisplay: any[] = [];
   
   newProgramacion = {
     nombre: '',
@@ -64,15 +51,7 @@ export class ProgramacionComponent implements OnInit {
     ]
   };
 
-  sociedadesList = [
-    { id: '123456789', name: 'SERVICIOS LOGISTICOS PERU S.A.', selected: true },
-    { id: '123456789', name: 'SERVICIOS LOGISTICOS PERU S.A.', selected: true },
-    { id: '123456789', name: 'SERVICIOS LOGISTICOS PERU S.A.', selected: false },
-    { id: '123456789', name: 'SERVICIOS LOGISTICOS PERU S.A.', selected: true },
-    { id: '123456789', name: 'SERVICIOS LOGISTICOS PERU S.A.', selected: false },
-    { id: '123456789', name: 'SERVICIOS LOGISTICOS PERU S.A.', selected: false },
-    { id: '123456789', name: 'SERVICIOS LOGISTICOS PERU S.A.', selected: true },
-  ];
+  sociedadesList: Sociedad[] = [];
 
   societySearchTerm: string = '';
   showSocietySearch: boolean = false;
@@ -84,9 +63,50 @@ export class ProgramacionComponent implements OnInit {
   selectedHour: string = '00';
   selectedMinute: string = '00';
 
-  constructor() { }
+  constructor(private http: HttpClient, private configService: AppConfigService) { }
 
   ngOnInit(): void {
+    this.loadSociedades();
+    this.loadProgramaciones();
+  }
+
+  loadProgramaciones() {
+    this.http.get<any[]>(`${this.configService.apiUrl}/crud/programacion`)
+      .subscribe({
+        next: (data) => {
+          this.programaciones = data.map(p => ({
+            id: p.iMProgramacion,
+            nombre: p.tNombre,
+            hora: p.tHora,
+            dias: p.tDias,
+            sociedades: p.iSociedadesCount,
+            estado: p.lActivo
+          }));
+          this.filteredProgramaciones = [...this.programaciones];
+          this.filterData(); // Apply any existing filters
+        },
+        error: (err) => console.error('Error loading programaciones', err)
+      });
+  }
+
+  loadSociedades() {
+    this.http.get<any[]>(`${this.configService.apiUrl}/crud/sociedades`)
+      .subscribe({
+        next: (data) => {
+          this.sociedadesList = data.map(s => ({
+            id: s.tCodigoSap || s.tRuc,
+            name: s.tRazonSocial,
+            ruc: s.tRuc,
+            tUsuario: s.tUsuario,
+            tClave: s.tClave,
+            selected: false,
+            hasSunatCredentials: !!(s.tUsuario && s.tClave),
+            sapAccounts: [],
+            loadingSap: false
+          }));
+        },
+        error: (err) => console.error('Error loading sociedades', err)
+      });
   }
 
   get filteredSocieties() {
@@ -100,8 +120,6 @@ export class ProgramacionComponent implements OnInit {
     this.showSocietySearch = !this.showSocietySearch;
     if (!this.showSocietySearch) {
       this.societySearchTerm = '';
-    } else {
-      // Optional: Focus logic could be added here with ViewChild
     }
   }
 
@@ -150,18 +168,142 @@ export class ProgramacionComponent implements OnInit {
     this.newProgramacion.dias[index].selected = !this.newProgramacion.dias[index].selected;
   }
 
-  toggleSociety(society: any): void {
-    society.selected = !society.selected;
+  toggleSociety(soc: Sociedad): void {
+    soc.selected = !soc.selected;
+    if (soc.selected) {
+        this.loadSapAccounts(soc);
+    }
+  }
+
+  loadSapAccounts(soc: Sociedad) {
+      soc.loadingSap = true;
+      this.http.get<any[]>(`${this.configService.apiUrl}/crud/sociedades/${soc.ruc}/sap-accounts`)
+          .subscribe({
+              next: (accounts) => {
+                  soc.sapAccounts = accounts;
+                  if (accounts.length > 0) {
+                      soc.selectedSapAccount = accounts[0]; // Auto-select first or logic
+                  }
+                  soc.loadingSap = false;
+              },
+              error: (err) => {
+                  console.error('Error loading SAP accounts', err);
+                  soc.loadingSap = false;
+              }
+          });
   }
 
   getSelectedSocietiesCount(): number {
     return this.sociedadesList.filter(s => s.selected).length;
   }
 
-  saveProgramacion(): void {
-    console.log('Guardando programación...', this.newProgramacion);
-    console.log('Sociedades seleccionadas:', this.sociedadesList.filter(s => s.selected));
-    this.closeModal();
+  preSaveProgramacion(): void {
+    console.log('Pre-guardando programación...', this.newProgramacion);
+    
+    // Better mapping based on index
+    const daysMap = ['Lun', 'Mar', 'Mier', 'Juev', 'Vier', 'Sab', 'Dom'];
+    const activeDays = this.newProgramacion.dias
+        .map((d, index) => d.selected ? daysMap[index] : null)
+        .filter(d => d !== null) as string[];
+
+    const selectedRucs = this.sociedadesList
+        .filter(s => s.selected)
+        .map(s => s.ruc);
+
+    this.pendingSociedadesDisplay = this.sociedadesList
+        .filter(s => s.selected)
+        .map(s => ({ 
+            ruc: s.ruc, 
+            name: s.name,
+            codeSociedad: s.id,
+            sunatUser: s.tUsuario,
+            sunatPass: s.tClave,
+            sapUser: s.selectedSapAccount?.tUsuario,
+            sapPass: s.selectedSapAccount?.tClave
+        }));
+
+    this.pendingPayload = {
+        tNombre: this.newProgramacion.nombre || 'Nueva Programación',
+        tHora: `${this.selectedHour}:${this.selectedMinute}`,
+        tDias: activeDays,
+        sociedades: selectedRucs,
+        lActivo: true
+    };
+    
+    this.isConfirmModalOpen = true;
+  }
+
+  closeConfirmModal(): void {
+    this.isConfirmModalOpen = false;
+    this.pendingPayload = null;
+    this.pendingSociedadesDisplay = [];
+  }
+
+  confirmSaveProgramacion(): void {
+    if (!this.pendingPayload) return;
+
+    this.http.post<any>(`${this.configService.apiUrl}/crud/programacion`, this.pendingPayload)
+        .subscribe({
+            next: (resp) => {
+                console.log('Programación creada', resp);
+                this.loadProgramaciones(); // Reload list
+                this.closeConfirmModal(); // Close confirm modal
+                this.closeModal(); // Close create modal
+                this.resetForm();
+            },
+            error: (err) => console.error('Error creando programación', err)
+        });
+  }
+
+  resetForm(): void {
+    this.newProgramacion = {
+        nombre: '',
+        hora: '',
+        dias: [
+          { label: 'L', selected: true },
+          { label: 'M', selected: false },
+          { label: 'M', selected: true },
+          { label: 'J', selected: true },
+          { label: 'V', selected: false },
+          { label: 'S', selected: false },
+          { label: 'D', selected: true }
+        ]
+    };
+    // Reset societies selection
+    this.sociedadesList.forEach(s => {
+        s.selected = false;
+        s.selectedSapAccount = undefined;
+    });
+    this.selectedHour = '00';
+    this.selectedMinute = '00';
+  }
+
+  openDeleteModal(item: any): void {
+    this.isDeleteModalOpen = true;
+    this.itemToDelete = item;
+  }
+
+  closeDeleteModal(): void {
+    this.isDeleteModalOpen = false;
+    this.itemToDelete = null;
+  }
+
+  confirmDelete(): void {
+    if (this.itemToDelete) {
+      this.http.delete(`${this.configService.apiUrl}/crud/programacion/${this.itemToDelete.id}`)
+        .subscribe({
+            next: () => {
+                console.log('Programación eliminada exitosamente');
+                this.loadProgramaciones(); // Reload list
+                this.closeDeleteModal();
+            },
+            error: (err) => {
+                console.error('Error eliminando programación', err);
+                // Optionally show user error
+                this.closeDeleteModal();
+            }
+        });
+    }
   }
 
   filterData(): void {
@@ -190,8 +332,20 @@ export class ProgramacionComponent implements OnInit {
   }
 
   toggleStatus(item: any): void {
+    // Optimistic update
+    const previousState = item.estado;
     item.estado = !item.estado;
-    // Here you would typically call an API to update the status
-    console.log(`Status toggled for ${item.nombre}: ${item.estado}`);
+
+    this.http.put(`${this.configService.apiUrl}/crud/programacion/${item.id}/toggle`, {})
+        .subscribe({
+            next: (resp: any) => {
+                console.log(`Status toggled for ${item.nombre}: ${resp.lActivo}`);
+                item.estado = resp.lActivo; // Ensure sync with backend
+            },
+            error: (err) => {
+                console.error('Error toggling status', err);
+                item.estado = previousState; // Revert on error
+            }
+        });
   }
 }

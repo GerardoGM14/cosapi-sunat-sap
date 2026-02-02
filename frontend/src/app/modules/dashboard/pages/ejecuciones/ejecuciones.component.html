@@ -5,6 +5,53 @@
     <p class="page-subtitle">Visualice y administre el historial de ejecuciones de procesos en tiempo real.</p>
   </div>
 
+<!-- Parameters Modal -->
+<div *ngIf="isParamsModalOpen" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Confirmar Ejecución</h3>
+      <button class="modal-close-btn" (click)="closeParamsModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">Verifique los parámetros antes de ejecutar el proceso a demanda.</p>
+      
+      <div class="summary-group">
+        <h4>Detalles de la Sociedad</h4>
+        <div class="summary-item">
+          <span class="label">Razón Social:</span>
+          <span class="value">{{ selectedParamsTask?.nombre }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">RUC:</span>
+          <span class="value">{{ selectedParamsTask?.ruc }}</span>
+        </div>
+      </div>
+
+      <div class="summary-group">
+        <h4>Parámetros de Ejecución</h4>
+        <div class="summary-item">
+          <span class="label">Fecha Seleccionada:</span>
+          <span class="value" style="font-weight: bold; color: #3498db;">{{ selectedParamsTask?.selectedDateFormatted }}</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Tipo:</span>
+            <span class="value">Ejecución Manual</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeParamsModal()">Cancelar</button>
+      <button class="btn-confirm" (click)="executeFromModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        Confirmar y Ejecutar
+      </button>
+    </div>
+  </div>
+</div>
+
+
   <!-- Filters Toolbar -->
   <div class="table-toolbar">
     <div class="search-input-wrapper">
@@ -36,7 +83,7 @@
           <th style="width: 320px;">Nombre Completo</th>
           <th style="width: 170px;">Última Ejecución</th>
           <th style="width: 180px; text-align: center;">Total Ejecuciones</th>
-          <th style="width: 160px;">Seleccionar Fecha</th>
+          <th style="width: 210px;">Seleccionar Fecha</th>
           <th style="width: 250px;"></th>
         </tr>
       </thead>
@@ -50,20 +97,52 @@
           <td class="cell-value">{{ item.ultimaEjecucion }}</td>
           <td class="text-center cell-value">{{ item.totalEjecuciones }}</td>
           <td>
-            <div class="date-picker-placeholder">
-              <span>Seleccionar</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <div class="custom-select-wrapper custom-date-wrapper">
+                <div *ngIf="activeCalendarRowId === item.id" class="dropdown-backdrop" (click)="activeCalendarRowId = null"></div>
+                
+                <div class="custom-select-container" [class.open]="activeCalendarRowId === item.id">
+                    <div class="custom-select-header" (click)="toggleCalendar(item, $event)" [class.placeholder]="!item.selectedDate">
+                      <span>{{ item.selectedDateFormatted || 'Seleccionar' }}</span>
+                      <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </div>
+                    
+                    <div class="custom-select-body calendar-popup" [class.visible]="activeCalendarRowId === item.id" (click)="$event.stopPropagation()">
+                      <div class="calendar-header">
+                        <button type="button" (click)="changeMonth(-1, $event)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span>{{ months[currentCalendarDate.getMonth()] }} {{ currentCalendarDate.getFullYear() }}</span>
+                        <button type="button" (click)="changeMonth(1, $event)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                      </div>
+                      
+                      <div class="calendar-weekdays">
+                        <div *ngFor="let day of weekDays">{{ day }}</div>
+                      </div>
+                      
+                      <div class="calendar-grid">
+                        <div *ngFor="let dayObj of daysInMonth" 
+                             class="calendar-day" 
+                             [class.other-month]="!dayObj.currentMonth"
+                             [class.selected]="item.selectedDate && dayObj.date.getTime() === item.selectedDate.getTime()"
+                             (click)="selectDate(dayObj, item)">
+                          {{ dayObj.day }}
+                        </div>
+                      </div>
+                    </div>
+                </div>
             </div>
           </td>
           <td class="actions-cell-wrapper">
             <div class="actions-cell-content">
-              <button class="btn-status" [ngClass]="getStatusClass(item.estado)">
+              <button class="btn-status" [ngClass]="getStatusClass(item.estado)" (click)="openParamsModal(item)">
                 {{ item.estado }}
                 <span *ngIf="item.estado === 'Ejecutar'" class="status-icon">▶</span>
                 <span *ngIf="item.estado === 'Procesando'" class="status-icon spinner"></span>
               </button>
               
-              <button class="btn-icon-sm" (click)="openDrawer(item)">
+              <button class="btn-icon-sm" (click)="openDrawer(item)" title="Ver Historial">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               </button>
             </div>
@@ -224,6 +303,9 @@
         <span class="badge" [ngClass]="act.tipo === 'Programación' ? 'badge-blue' : 'badge-yellow'">
           {{ act.tipo }}
         </span>
+        <button *ngIf="act.tipo === 'Programación'" class="btn-icon-sm" (click)="runProgramacion(act.id, selectedExecution.ruc)" title="Ejecutar Ahora" style="margin-left: auto; margin-right: 5px; color: #2ecc71; border: none; background: none; cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </button>
         <div class="card-icon-right" (click)="openLogModal(act, $event)">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#95a5a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
         </div>

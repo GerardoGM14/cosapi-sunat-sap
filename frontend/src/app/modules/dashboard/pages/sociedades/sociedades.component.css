@@ -988,3 +988,37 @@ tbody tr:hover td {
     opacity: 1;
   }
 }
+
+/* SAP Select Styles */
+.sap-select {
+  border: 1px solid #dfe6e9; /* Neutral border */
+  border-radius: 8px;
+  background-color: #f8f9fa; /* Light background to distinguish it */
+  color: #2c3e50;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none; /* Remove default arrow to style if needed, but keeping simple for now */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2395a5a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px;
+  padding-right: 2.5rem; /* Space for the arrow */
+}
+
+.sap-select:focus {
+  border-color: #b2bec3 !important; /* Slightly darker neutral on focus */
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(178, 190, 195, 0.2) !important; /* Soft grey glow */
+  outline: none;
+}
+
+.sap-select option {
+  padding: 10px;
+  color: #2c3e50;
+  background-color: #fff;
+}
+
+.sap-group label {
+  color: #34495e;
+  font-weight: 700;
+}

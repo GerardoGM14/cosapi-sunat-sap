@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { AppConfigService } from '../../../services/app-config.service';
+import { AppConfigService } from '../../../../services/app-config.service';
 
 @Component({
-  selector: 'app-config',
-  templateUrl: './config.component.html',
-  styleUrls: ['./config.component.css']
+  selector: 'app-sap-sunat',
+  templateUrl: './sap-sunat.component.html',
+  styleUrls: ['./sap-sunat.component.css']
 })
-export class ConfigComponent implements OnInit {
+export class SapSunatComponent implements OnInit {
   configData = {
     sunat: {
       ruc: '',
@@ -80,7 +80,6 @@ export class ConfigComponent implements OnInit {
   showSapPassword = false;
   errorMessage = '';
   successMessage = '';
-  isEditing = false;
 
   sunatImage: string = 'assets/images/logo-sunat.svg';
   sapImage: string = 'assets/images/logo-sap.png';
@@ -218,24 +217,28 @@ export class ConfigComponent implements OnInit {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
 
-  toggleEdit() {
-    this.isEditing = true;
-    this.successMessage = '';
-    this.errorMessage = '';
-  }
-
   saveConfig() {
     this.errorMessage = '';
     this.successMessage = '';
 
     // Validaciones
-    if (!this.configData.sap.usuario) {
-      this.showError('El usuario SAP es requerido.');
+    if (!this.configData.sunat.ruc || this.configData.sunat.ruc.length > 11) {
+      this.showError('El RUC debe tener máximo 11 caracteres.');
       return;
     }
 
-    if (!this.configData.sap.usuario.includes('@')) {
-      this.showError('El usuario SAP debe contener "@".');
+    if (!this.configData.sunat.usuario) {
+      this.showError('El usuario SOL es requerido.');
+      return;
+    }
+
+    if (!this.configData.sunat.claveSol) {
+      this.showError('La clave SOL es requerida.');
+      return;
+    }
+
+    if (!this.configData.sap.usuario || !this.configData.sap.usuario.includes('@')) {
+      this.showError('El usuario SAP debe ser válido (contener @).');
       return;
     }
 
@@ -244,42 +247,56 @@ export class ConfigComponent implements OnInit {
       return;
     }
 
-    const payload = {
-        usuario: this.configData.sap.usuario,
-        password: this.configData.sap.password
-    };
-
-    this.http.post<any>(`${this.configService.apiUrl}/utils/config/sap`, payload)
-      .subscribe({
-        next: (res) => {
-            console.log('Guardando configuración SAP:', this.configData.sap);
-            this.showSuccess('Configuración guardada correctamente.');
-            this.isEditing = false;
-        },
-        error: (err) => {
-            console.error('Error saving SAP config', err);
-            this.showError('Error al guardar la configuración.');
-        }
-      });
-    
-    // El resto de la lógica de ejecución del bot se ha movido a sap-sunat
-    /*
-    if (!this.configData.sunat.ruc || this.configData.sunat.ruc.length > 11) {
-      this.showError('El RUC debe tener máximo 11 caracteres.');
+    if (!this.configData.general.sociedad) {
+      this.showError('Debe seleccionar una sociedad.');
       return;
     }
-    // ... (otras validaciones)
+
+    if (!this.configData.general.fecha) {
+      this.showError('Debe seleccionar una fecha.');
+      return;
+    }
+
+    if (!this.configData.general.folder) {
+      this.showError('Debe seleccionar una carpeta de salida.');
+      return;
+    }
+
+    // Si todo está válido, abrir el modal de confirmación
     this.isConfirmModalOpen = true;
-    */
   }
 
   confirmProcess() {
-    // Método deshabilitado en esta vista
     this.isConfirmModalOpen = false;
-    /*
+    
+    // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY
     const dateParts = this.configData.general.fecha.split('-');
-    // ...
-    */
+    const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+    // Crear payload con fecha formateada
+    const payload = {
+      sunat: this.configData.sunat,
+      sap: this.configData.sap,
+      general: {
+        ...this.configData.general,
+        fecha: formattedDate
+      }
+    };
+
+    console.log('Iniciando proceso...', payload);
+    this.showSuccess('Iniciando proceso...');
+
+    this.http.post(`${this.configService.apiUrl}/bot/run`, payload)
+      .subscribe({
+        next: (res: any) => {
+          console.log('Bot response:', res);
+          this.showSuccess('Proceso iniciado correctamente.');
+        },
+        error: (err) => {
+          console.error('Error starting bot:', err);
+          this.showError('Error al iniciar el proceso: ' + (err.error?.detail || err.message));
+        }
+      });
   }
 
   cancelProcess() {
