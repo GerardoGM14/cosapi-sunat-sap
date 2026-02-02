@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import SessionLocal, get_db
-from app.models import MSociedad, MUsuario, MSap, MSapSociedad, MProgramacion, MProgramacionSociedad, DEjecucion
+from app.models import MSociedad, MUsuario, MSap, MSapSociedad, MProgramacion, MProgramacionSociedad, DEjecucion, MListaBlanca
 from app.api.auth import get_password_hash
 from app.services.execution import execute_programacion_logic, execute_sociedad_logic
 from pydantic import BaseModel
 from datetime import datetime
+import pandas as pd
+import io
 
 router = APIRouter()
 
@@ -408,3 +410,197 @@ async def execute_sociedad_manual(ruc: str, request: ExecuteManualRequest, db: S
         return {"message": "No se generaron ejecuciones (verifique que la sociedad tenga cuenta SAP activa)", "execution_ids": []}
 
     return {"message": "Ejecución iniciada", "execution_ids": execution_ids}
+
+# Proveedores / Lista Blanca Endpoints
+
+class ListaBlancaBase(BaseModel):
+    tRucListaBlanca: str
+    tRazonSocial: str
+    lActivo: bool = True
+
+class ListaBlancaResponse(ListaBlancaBase):
+    fRegistro: datetime | None = None
+    
+    class Config:
+        orm_mode = True
+
+@router.get("/proveedores", response_model=List[ListaBlancaResponse])
+def get_proveedores(db: Session = Depends(get_db)):
+    return db.query(MListaBlanca).all()
+
+@router.post("/proveedores/preview")
+async def preview_proveedores_excel(file: UploadFile = File(...)):
+    if not file.filename.endswith('.xlsx') and not file.filename.endswith('.xls'):
+        raise HTTPException(status_code=400, detail="Formato de archivo inválido. Solo se permiten archivos Excel (.xlsx, .xls)")
+    
+    try:
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents))
+        
+        # Validar columnas requeridas (flexible)
+        # Helper to normalize strings (remove accents)
+        import unicodedata
+        def normalize_str(s):
+            return ''.join(c for c in unicodedata.normalize('NFD', str(s)) if unicodedata.category(c) != 'Mn').upper().strip()
+
+        df.columns = [normalize_str(col) for col in df.columns]
+        
+        col_ruc = None
+        col_razon = None
+        
+        for col in df.columns:
+            if "RUC" in col:
+                col_ruc = col
+                break
+        
+        for col in df.columns:
+            if "RAZON" in col or "SOCIAL" in col or "NOMBRE" in col:
+                col_razon = col
+                break
+        
+        if not col_ruc or not col_razon:
+             raise HTTPException(status_code=400, detail=f"No se encontraron las columnas requeridas 'RUC' y 'RAZON SOCIAL' en el Excel.")
+        
+        preview_data = []
+        df = df.fillna('')
+        
+        for i, row in df.iterrows():
+            ruc = str(row[col_ruc]).strip()
+            razon_social = str(row[col_razon]).strip()
+            
+            # Clean RUC: remove decimals if float, then remove non-digits
+            if ruc.endswith('.0'):
+                ruc = ruc[:-2]
+            
+            # Remove any non-digit characters (spaces, hyphens, etc.)
+            import re
+            ruc = re.sub(r'\D', '', ruc)
+
+            # Relaxed validation: just check if we have digits
+            if not ruc:
+                continue
+            
+            preview_data.append({
+                "id": i, # Temporary ID for frontend key
+                "ruc": ruc,
+                "razonSocial": razon_social,
+                "estado": True # Default value
+            })
+            
+        return preview_data
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"Error procesando excel: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+
+@router.post("/proveedores/batch")
+async def create_proveedores_batch(proveedores: List[ListaBlancaBase], db: Session = Depends(get_db)):
+    try:
+        count_created = 0
+        count_updated = 0
+        
+        for prov in proveedores:
+            existing = db.query(MListaBlanca).filter(MListaBlanca.tRucListaBlanca == prov.tRucListaBlanca).first()
+            if existing:
+                existing.tRazonSocial = prov.tRazonSocial
+                existing.lActivo = prov.lActivo               
+                existing.fModificacion = datetime.now()
+                existing.iUsuarioModificacion = 1
+                count_updated += 1
+            else:
+                new_prov = MListaBlanca(
+                    tRucListaBlanca=prov.tRucListaBlanca,
+                    tRazonSocial=prov.tRazonSocial,
+                    lActivo=prov.lActivo,
+                    fRegistro=datetime.now(),
+                    iUsuarioRegistro=1
+                )
+                db.add(new_prov)
+                count_created += 1
+        
+        db.commit()
+        
+        return {
+            "message": "Proceso completado exitosamente",
+            "created": count_created,
+            "updated": count_updated
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error guardando datos: {str(e)}")
+
+@router.post("/proveedores/upload")
+async def upload_proveedores_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.endswith('.xlsx') and not file.filename.endswith('.xls'):
+        raise HTTPException(status_code=400, detail="Formato de archivo inválido. Solo se permiten archivos Excel (.xlsx, .xls)")
+    
+    try:
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents))
+        
+        # Validar columnas requeridas (flexible)
+        df.columns = [str(col).upper().strip() for col in df.columns]
+        
+        col_ruc = None
+        col_razon = None
+        
+        for col in df.columns:
+            if "RUC" in col:
+                col_ruc = col
+                break
+        
+        for col in df.columns:
+            if "RAZON" in col or "SOCIAL" in col or "NOMBRE" in col:
+                col_razon = col
+                break
+        
+        if not col_ruc or not col_razon:
+             raise HTTPException(status_code=400, detail=f"No se encontraron las columnas requeridas 'RUC' y 'RAZON SOCIAL' en el Excel.")
+        
+        count_created = 0
+        count_updated = 0
+        
+        df = df.fillna('')
+        
+        for _, row in df.iterrows():
+            ruc = str(row[col_ruc]).strip()
+            razon_social = str(row[col_razon]).strip()
+            
+            if ruc.endswith('.0'):
+                ruc = ruc[:-2]
+            
+            if not ruc or len(ruc) != 11 or not ruc.isdigit():
+                continue
+            
+            existing = db.query(MListaBlanca).filter(MListaBlanca.tRucListaBlanca == ruc).first()
+            if existing:
+                existing.tRazonSocial = razon_social
+                existing.fModificacion = datetime.now()
+                existing.iUsuarioModificacion = 1
+                count_updated += 1
+            else:
+                new_prov = MListaBlanca(
+                    tRucListaBlanca=ruc,
+                    tRazonSocial=razon_social,
+                    lActivo=True,
+                    fRegistro=datetime.now(),
+                    iUsuarioRegistro=1
+                )
+                db.add(new_prov)
+                count_created += 1
+        
+        db.commit()
+        
+        return {
+            "message": "Proceso completado exitosamente",
+            "created": count_created,
+            "updated": count_updated
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"Error procesando excel: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")

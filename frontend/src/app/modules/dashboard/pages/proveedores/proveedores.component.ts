@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ProveedorService } from '../../../../services/proveedor.service';
 
 @Component({
   selector: 'app-proveedores',
@@ -60,7 +61,82 @@ export class ProveedoresComponent implements OnInit {
     estado: true
   };
 
-  constructor() { }
+  constructor(private proveedorService: ProveedorService) { }
+
+  isPreviewModalOpen = false;
+  previewData: any[] = [];
+  
+  // Loader and Toast State
+  isLoading = false;
+  loadingTimeout: any;
+  successMessage = '';
+  errorMessage = '';
+
+  triggerToastTimeout() {
+    setTimeout(() => {
+      this.errorMessage = '';
+      this.successMessage = '';
+    }, 4000);
+  }
+
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.proveedorService.previewExcel(file).subscribe({
+        next: (data: any[]) => {
+          this.previewData = data;
+          this.isPreviewModalOpen = true;
+          // Reset file input
+          event.target.value = '';
+        },
+        error: (err: any) => {
+          console.error('Preview error', err);
+          this.errorMessage = 'Error al leer el archivo: ' + (err.error?.detail || err.message);
+          this.triggerToastTimeout();
+          event.target.value = '';
+        }
+      });
+    }
+  }
+
+  confirmUpload(): void {
+    // Map preview data to backend expected format
+    const payload = this.previewData.map(item => ({
+      tRucListaBlanca: item.ruc,
+      tRazonSocial: item.razonSocial,
+      lActivo: true // Managed by system as per requirement
+    }));
+
+    // Start loader timer (2 seconds delay)
+    this.loadingTimeout = setTimeout(() => {
+      this.isLoading = true;
+    }, 2000);
+
+    this.proveedorService.importBatch(payload).subscribe({
+      next: (res: any) => {
+        clearTimeout(this.loadingTimeout);
+        this.isLoading = false;
+
+        this.successMessage = `Importación completada: ${res.created} creados, ${res.updated} actualizados.`;
+        this.triggerToastTimeout();
+        this.closePreviewModal();
+        // TODO: Refresh list if implemented
+      },
+      error: (err: any) => {
+        clearTimeout(this.loadingTimeout);
+        this.isLoading = false;
+
+        console.error('Import error', err);
+        this.errorMessage = 'Error al importar datos: ' + (err.error?.detail || err.message);
+        this.triggerToastTimeout();
+      }
+    });
+  }
+
+  closePreviewModal(): void {
+    this.isPreviewModalOpen = false;
+    this.previewData = [];
+  }
 
   ngOnInit(): void {
   }
