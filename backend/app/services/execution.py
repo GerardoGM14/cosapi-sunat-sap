@@ -81,14 +81,23 @@ async def execute_sociedad_logic(db: Session, target_rucs: list[str], manual_use
             sunat_pass = sociedad.tClave or ""
             sap_user = sap_account.tUsuario or ""
             sap_pass = sap_account.tClave or ""
-            soc_name = sociedad.tRazonSocial or target_ruc
+            soc_code = sociedad.tCodigoSap or sociedad.tRazonSocial # Fallback to name if code is missing but prefer code
             
-            # Use timestamped folder
-            folder_name = f"Descargas_{target_ruc}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            # Use timestamped folder with format PE02_DDMMYY
+            # Date for folder name: use current date or execution date? User said "fecha de ejecución".
+            # If date_str is DD/MM/YYYY, we can parse it.
+            try:
+                dt_obj = datetime.strptime(date_str, "%d/%m/%Y")
+                date_suffix = dt_obj.strftime("%d%m%y")
+            except:
+                date_suffix = datetime.now().strftime("%d%m%y")
+                
+            folder_name = f"{soc_code}_{date_suffix}"
             
             # Use absolute path for folder to avoid ambiguity
-            base_download_dir = r"C:\AutoSUN_Descargas" # Example fixed path or config
-            full_folder_path = f"{base_download_dir}\\{folder_name}"
+            # Configured for Linux Server as per user request
+            base_download_dir = "/home/sertech/sunat-sap" 
+            full_folder_path = f"{base_download_dir}/{folder_name}"
 
             config = BotConfig(
                 sunat=SunatConfig(
@@ -101,7 +110,7 @@ async def execute_sociedad_logic(db: Session, target_rucs: list[str], manual_use
                     password=sap_pass
                 ),
                 general=GeneralConfig(
-                    sociedad=soc_name,
+                    sociedad=soc_code, # Send code instead of name
                     fecha=date_str,
                     folder=full_folder_path
                 )

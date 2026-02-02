@@ -1,6 +1,52 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AppConfigService } from '../../../../services/app-config.service';
+import { SociedadService } from '../../../../services/sociedad.service';
+
+const SAP_SOCIEDADES = [
+    { id: 'PE01', name: 'PE01 - Country Template PE' },
+    { id: 'PE02', name: 'PE02 - COSAPI S.A' },
+    { id: 'PE03', name: 'PE03 - CSP. MINERIA S.A.C.' },
+    { id: 'PE04', name: 'PE04 - CSP. GESTION INMB. S.A.C.' },
+    { id: 'PE05', name: 'PE05 - COSAPI CONSORCIOS (HCM)' },
+    { id: 'PE06', name: 'PE06 - CONSORCIO BELLAVISTA' },
+    { id: 'PE07', name: 'PE07 - CONSORCIO COSAPI - JOHESA' },
+    { id: 'PE08', name: 'PE08 - CONS VIAL CHONGOYAPE-LLAM' },
+    { id: 'PE09', name: 'PE09 - CC. VIAL TAMBILLO' },
+    { id: 'PE10', name: 'PE10 - CONS VIAL QUILCA MATARANI' },
+    { id: 'PE11', name: 'PE11 - CONSORCIO VIAL OAS-COSAPI' },
+    { id: 'PE12', name: 'PE12 - CC. COSAPI MAS ERRAZURIZ' },
+    { id: 'PE13', name: 'PE13 - CSP. INMB. & DES. INMB' },
+    { id: 'PE14', name: 'PE14 - CC. SADE - COSAPI' },
+    { id: 'PE15', name: 'PE15 - INVERSION CD S.A.' },
+    { id: 'PE16', name: 'PE16 - DRLLO. SALAVERRY S.A.C.' },
+    { id: 'PE17', name: 'PE17 - DESARROLLO BELISARIO 1035' },
+    { id: 'PE18', name: 'PE18 - CONSORCIO JJC-COSAPI' },
+    { id: 'PE19', name: 'PE19 - CONSORCIO VIAL VIZCACHANE' },
+    { id: 'PE20', name: 'PE20 - CSP. INMOBILIARIA S.A.' },
+    { id: 'PE21', name: 'PE21 - CONSORCIO SEÑOR DE LUREN' },
+    { id: 'PE22', name: 'PE22 - DESARROLLO SUCRE 132 S.A.' },
+    { id: 'PE23', name: 'PE23 - CC. VIAL DEL SUR' },
+    { id: 'PE24', name: 'PE24 - CC. PUENTES DE LORETO' },
+    { id: 'PE25', name: 'PE25 - CONS HOTEL ATTON COSAPI' },
+    { id: 'PE26', name: 'PE26 - DRLLO. OLGUIN S.A.C.' },
+    { id: 'PE27', name: 'PE27 - CC. COSAPI - JJC-SC' },
+    { id: 'PE28', name: 'PE28 - CC. BELFI-COSAPI PERU' },
+    { id: 'PE29', name: 'PE29 - CONSORCIO NUEVO LIMATAMBO' },
+    { id: 'PE30', name: 'PE30 - DRLLO. LINCE S.A.C.' },
+    { id: 'PE31', name: 'PE31 - DRLLO. INMB. DERBY S.A.C.' },
+    { id: 'PE32', name: 'PE32 - DRLLO. AGUARICO S.A.C.' },
+    { id: 'PE33', name: 'PE33 - INTERANDES HOLDING S.A.' },
+    { id: 'PE34', name: 'PE34 - CC. COSAPI - HV' },
+    { id: 'PE35', name: 'PE35 - DESARROLLO BELLAVISTA SAC' },
+    { id: 'PE36', name: 'PE36 - DESARROLLO LANCEROS SAC' },
+    { id: 'PE37', name: 'PE37 - CONSORCIO R&H' },
+    { id: 'PE38', name: 'PE38 - CONS CONSTRUCT PERU - CCP' },
+    { id: 'PE39', name: 'PE39 - CONSORCIO CCMS' },
+    { id: 'CL01', name: 'CL01 - Country Template CL' },
+    { id: 'CL02', name: 'CL02 - COSAPI SA AGENCIA CHILE' },
+    { id: 'CL03', name: 'CL03 - COSAPI CHILE SA' }
+];
 
 @Component({
   selector: 'app-ejecuciones',
@@ -24,8 +70,19 @@ export class EjecucionesComponent implements OnInit {
   // Params Modal Logic
   isParamsModalOpen = false;
   selectedParamsTask: any = null;
+  isLoadingSap = false;
+  showSunatPassword = false;
+  showSapPassword = false;
+  
+  // UI Helpers
+  // Images removed as per user request
 
-  constructor(private http: HttpClient, private configService: AppConfigService) {
+
+  constructor(
+    private http: HttpClient, 
+    private configService: AppConfigService,
+    private sociedadService: SociedadService
+  ) {
     // Click outside listener for calendar
     document.addEventListener('click', (e: any) => {
         if (!e.target.closest('.custom-date-wrapper')) {
@@ -40,23 +97,39 @@ export class EjecucionesComponent implements OnInit {
 
   loadSociedades(): void {
     const today = new Date();
-    this.http.get<any[]>(`${this.configService.apiUrl}/crud/sociedades`).subscribe({
+    this.sociedadService.getAll().subscribe({
       next: (data) => {
-        this.ejecuciones = data.map((item, index) => ({
-            id: index + 1,
-            nombre: item.tRazonSocial,
-            ruc: item.tRuc,
-            ultimaEjecucion: '-', 
-            totalEjecuciones: 0,
-            listaBlanca: 0, 
-            listaBlancaTotal: 0, 
-            estado: 'Ejecutar', 
-            activas: [],
-            historial: [],
-            // New Date Fields
-            selectedDate: today,
-            selectedDateFormatted: this.formatDate(today)
-        }));
+        this.ejecuciones = data.map((item: any, index: number) => {
+            // Find SAP Code if missing
+            let codigoSap = item.tCodigoSap;
+            if (!codigoSap && item.tRazonSocial) {
+                const found = SAP_SOCIEDADES.find(s => s.name.toUpperCase().includes(item.tRazonSocial.toUpperCase()));
+                if (found) {
+                    codigoSap = found.id;
+                }
+            }
+
+            return {
+                id: index + 1,
+                nombre: item.tRazonSocial,
+                codigoSap: codigoSap, 
+                ruc: item.tRuc,
+                // Credentials from Sociedad Service
+                sunatUsuario: item.tUsuario,
+                sunatClave: item.tClave,
+                
+                ultimaEjecucion: '-', 
+                totalEjecuciones: 0,
+                listaBlanca: 0, 
+                listaBlancaTotal: 0, 
+                estado: 'Ejecutar', 
+                activas: [],
+                historial: [],
+                // New Date Fields
+                selectedDate: today,
+                selectedDateFormatted: this.formatDate(today)
+            };
+        });
         this.filterData();
       },
       error: (err) => console.error('Error loading sociedades', err)
@@ -142,6 +215,33 @@ export class EjecucionesComponent implements OnInit {
   openParamsModal(item: any): void {
       this.selectedParamsTask = item;
       this.isParamsModalOpen = true;
+      this.showSunatPassword = false;
+      this.showSapPassword = false;
+
+      // Initialize defaults
+      this.selectedParamsTask.sapUsuario = 'Cargando...';
+      this.selectedParamsTask.sapClave = '';
+
+      // Fetch SAP Accounts
+      this.isLoadingSap = true;
+      this.sociedadService.getSociedadSapAccounts(item.ruc).subscribe({
+          next: (accounts) => {
+              if (accounts && accounts.length > 0) {
+                  // Assuming the first active one is used, matching backend logic
+                  this.selectedParamsTask.sapUsuario = accounts[0].tUsuario;
+                  this.selectedParamsTask.sapClave = accounts[0].tClave;
+              } else {
+                  this.selectedParamsTask.sapUsuario = 'No asignado';
+                  this.selectedParamsTask.sapClave = '';
+              }
+              this.isLoadingSap = false;
+          },
+          error: (err) => {
+               console.error('Error loading SAP accounts', err);
+               this.selectedParamsTask.sapUsuario = 'Error';
+               this.isLoadingSap = false;
+          }
+      });
   }
 
   closeParamsModal(): void {

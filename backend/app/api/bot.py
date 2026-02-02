@@ -132,13 +132,13 @@ async def run_bot_logic(config: BotConfig):
             python_executable,
             script_path,
             "--folder", folder_path,
-            "--fecha", config.general.fecha,
-            "--ruc", config.sunat.ruc,
-            "--usuario-sunat", config.sunat.usuario,
-            "--clave-sunat", config.sunat.claveSol,
-            "--usuario-sap", config.sap.usuario,
-            "--password-sap", config.sap.password,
-            "--sociedad", config.general.sociedad
+            "--date", config.general.fecha, # Changed from --fecha to --date as per args_console.py
+            "--ruc_sunat", config.sunat.ruc, # Changed from --ruc to --ruc_sunat
+            "--user_sunat", config.sunat.usuario, # Changed from --usuario-sunat to --user_sunat
+            "--password_sunat", config.sunat.claveSol, # Changed from --clave-sunat to --password_sunat
+            "--correo_sap", config.sap.usuario, # Changed from --usuario-sap to --correo_sap
+            "--password_sap", config.sap.password, # Changed from --password-sap to --password_sap
+            "--code_sociedad", config.general.sociedad # Changed from --sociedad to --code_sociedad
         ]
         
         print(f"🚀 Ejecutando bot: {' '.join(args)}")
