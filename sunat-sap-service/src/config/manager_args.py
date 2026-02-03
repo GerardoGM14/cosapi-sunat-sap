@@ -1,22 +1,20 @@
-import os
 import json
 from typing import Optional
-from dotenv import load_dotenv
 from src.utils.args_console import get_args_console
 from src.utils.args_env import get_args_env
 from src.schemas.IConfig import IArgs
 from src.logger.colored_logger import ColoredLogger, Colors
-
-load_dotenv()
+from src.config.config_env import ConfigEnv
 
 logger = ColoredLogger()
 
+
 def get_args() -> Optional[IArgs]:
     try:
-        config_method = os.getenv('CONFIG_METHOD', 'env') 
+        config_method = ConfigEnv.CONFIG_METHOD
 
         args: IArgs
-        if config_method == 'console':
+        if config_method and config_method.lower() == 'console':
             args = get_args_console()
         else:
             args = get_args_env()

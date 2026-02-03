@@ -51,12 +51,26 @@ async def descargar_adjuntos(frame: FrameLocator, page: Page, folder: str) -> IR
                 
                 await button_visualizar.click()
 
-                input(f"Se dio click en el boton visualizar [{i}]")
+                logger.log(f"Se dio click en el boton visualizar de la fila [{i}] con factura [{factura_value}]", Colors.BRIGHT_WHITE)
+                await asyncio.sleep(2)
+                try:
+                    no_files = frame.locator('//div[@role="heading"]//span[contains(text(), "No se han encontrado")]')
+                    await no_files.wait_for(state="visible", timeout=3000)
+
+                    if await no_files.count() > 0:
+                        logger.log(f"Fila {i} [Factura: {factura_value}]: No se encontraron archivos adjuntos", Colors.YELLOW)
+                        btn_close = frame.locator('//footer[@class="sapMDialogFooter"]//button')
+                        await btn_close.wait_for(state="visible", timeout=3000)
+                        await btn_close.click()
+                        logger.log(f"Se cerró el modal de la fila [{i}] con factura [{factura_value}]\n", Colors.BRIGHT_WHITE)
+                        continue
+                except Exception as e:
+                    logger.log(f"🤔 Modal abierto para descargar archivos adjuntos", Colors.BRIGHT_WHITE)
 
                 modal = frame.locator("div[role='dialog'], div.sapMDialog").last 
                 
                 try:
-                    await modal.wait_for(state="visible", timeout=5000)
+                    await modal.wait_for(state="visible", timeout=2000)
 
                     await asyncio.sleep(2)
 
@@ -64,13 +78,11 @@ async def descargar_adjuntos(frame: FrameLocator, page: Page, folder: str) -> IR
 
                     await asyncio.sleep(2)
 
-
                     close_btn = modal.locator("button:has-text('Cerrar'), button:has-text('Close'), button[title='Cerrar']")
                     if await close_btn.count() > 0:
                         await close_btn.first.click()
                     else:
                         await page.keyboard.press("Escape")
-
                     
                     await modal.wait_for(state="hidden", timeout=5000)
                     processed_count += 1

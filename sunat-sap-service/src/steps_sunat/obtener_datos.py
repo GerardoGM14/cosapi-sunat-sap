@@ -38,7 +38,7 @@ async def obtener_datos(frame: FrameLocator, card: str) -> IReturn:
             msg = f'✅ Tarjeta {card_text} no tiene pendientes'
             logger.log(msg, color=Colors.GREEN, force_show=True)
             return {
-                'success': True,
+                'success': False,
                 'message': msg,
                 'error_system': False
             }

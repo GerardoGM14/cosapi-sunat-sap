@@ -1,22 +1,26 @@
 import asyncio
-import os
+from src.utils.date_current import dateCurrent
 from playwright.async_api import async_playwright
 from src.schemas.IReturn import IReturn
 from src.logger.colored_logger import ColoredLogger, Colors
 from src.schemas.IConfig import ISap
 from src.bot_manager import BotSap
+from src.socket_client.manager import socket_manager as io
+from src.schemas.ISocket import EmitEvent
 
 logger = ColoredLogger()
 
 
 async def appSap(args: ISap) -> IReturn:
     intento = 3
+    io.emit(
+        event=EmitEvent.SAP,
+        data={'message': f'🚀 Iniciando proceso de descarga de reporte contabilidad SAP', 'date': dateCurrent()}
+    )
     for i in range(intento):
         try:
             async with async_playwright() as p:
-                headless_mode = os.getenv("HEADLESS", "true").lower() == "true"
-                logger.log(f"🌍 Modo Headless (SAP): {headless_mode}", color=Colors.CYAN)
-                browser = await p.chromium.launch(headless=headless_mode)
+                browser = await p.chromium.launch(headless=False)
                 page = await browser.new_page()
 
                 await page.set_viewport_size({"width": 1600, "height": 1000})
@@ -35,50 +39,115 @@ async def appSap(args: ISap) -> IReturn:
                 login = await bot.login_sap()
                 if not login['success']:
                     if login['error_system']:
+                        io.emit(
+                            event=EmitEvent.SAP,
+                            data={'message': login['message'], 'date': dateCurrent()}
+                        )
                         continue
+                    io.emit(
+                        event=EmitEvent.SAP,
+                        data={'message': login['message'], 'date': dateCurrent()}
+                    )
                     return {'success': False, 'error_system': False, 'message': login['message']}
+                io.emit(
+                    event=EmitEvent.SAP,
+                    data={'message': login['message'], 'date': dateCurrent()}
+                )
 
                 report = await bot.reporte_contabilidad()
                 if not report['success']:
                     if report['error_system']:
+                        io.emit(
+                            event=EmitEvent.SAP,
+                            data={'message': report['message'], 'date': dateCurrent()}
+                        )
                         continue
+                    io.emit(
+                        event=EmitEvent.SAP,
+                        data={'message': report['message'], 'date': dateCurrent()}
+                    )
                     return {'success': False, 'error_system': False, 'message': report['message']}
-                
+                io.emit(
+                    event=EmitEvent.SAP,
+                    data={'message': report['message'], 'date': dateCurrent()}
+                )
+
                 filtro = await bot.filtro(frame=report['frame'])
                 if not filtro['success']:
                     if filtro['error_system']:
+                        io.emit(
+                            event=EmitEvent.SAP,
+                            data={'message': filtro['message'], 'date': dateCurrent()}
+                        )
                         continue
+                    io.emit(
+                        event=EmitEvent.SAP,
+                        data={'message': filtro['message'], 'date': dateCurrent()}
+                    )
                     return {'success': False, 'error_system': False, 'message': filtro['message']}
-                
+                io.emit(
+                    event=EmitEvent.SAP,
+                    data={'message': filtro['message'], 'date': dateCurrent()}
+                )
+
                 validar_filtros = await bot.validar_filtros(frame=report['frame'])
                 if not validar_filtros['success']:
                     if validar_filtros['error_system']:
+                        io.emit(
+                            event=EmitEvent.SAP,
+                            data={'message': validar_filtros['message'], 'date': dateCurrent()}
+                        )
                         continue
+                    io.emit(
+                        event=EmitEvent.SAP,
+                        data={'message': validar_filtros['message'], 'date': dateCurrent()}
+                    )
                     return {'success': False, 'error_system': False, 'message': validar_filtros['message']}
+                io.emit(
+                    event=EmitEvent.SAP,
+                    data={'message': validar_filtros['message'], 'date': dateCurrent()}
+                )
 
                 descargar_excel = await bot.descargar_excel(frame=report['frame'])
                 if not descargar_excel['success']:
                     if descargar_excel['error_system']:
+                        io.emit(
+                            event=EmitEvent.SAP,
+                            data={'message': descargar_excel['message'], 'date': dateCurrent()}
+                        )
                         continue
+                    io.emit(
+                        event=EmitEvent.SAP,
+                        data={'message': descargar_excel['message'], 'date': dateCurrent()}
+                    )
                     return {'success': False, 'error_system': False, 'message': descargar_excel['message']}
-                
-                asyncio.sleep(3)
-                
-                # --- NUEVO PASO: Descargar Adjuntos ---
-                print("\n" + "="*50)
-                print("⏳ Iniciando descarga de adjuntos...")
-                print("="*50 + "\n")
+                io.emit(
+                    event=EmitEvent.SAP,
+                    data={'message': descargar_excel['message'], 'date': dateCurrent()}
+                )
+
+                await asyncio.sleep(3)
 
                 descargar_adjuntos = await bot.descargar_adjuntos(frame=report['frame'])
                 if not descargar_adjuntos['success']:
                     if descargar_adjuntos['error_system']:
+                        io.emit(
+                            event=EmitEvent.SAP,
+                            data={'message': descargar_adjuntos['message'], 'date': dateCurrent()}
+                        )
                         logger.log(descargar_adjuntos['message'], color=Colors.RED)
                     else:
+                        io.emit(
+                            event=EmitEvent.SAP,
+                            data={'message': descargar_adjuntos['message'], 'date': dateCurrent()}
+                        )
                         logger.log(descargar_adjuntos['message'], color=Colors.YELLOW)
 
-                        # input("\nPresiona Enter para continuar ⏳...\n")
-                    # return { ... }
-                
+                io.emit(
+                    event=EmitEvent.SAP,
+                    data={'message': descargar_adjuntos['message'], 'date': dateCurrent()}
+                )
+
                 logger.log(descargar_adjuntos['message'], color=Colors.GREEN)
                 return {
                     'success': True,
@@ -87,13 +156,22 @@ async def appSap(args: ISap) -> IReturn:
                     'file_path_sap': descargar_excel['file_path_sap'],
                 }
         except Exception as e:
-            logger.log(f"❌ Error en la iteración {i+1}: {e}", color=Colors.BRIGHT_RED)
+            msg = f"❌ Error en la iteración {i+1}: {e}"
+            io.emit(
+                event=EmitEvent.SAP,
+                data={'message': msg, 'date': dateCurrent()}
+            )
+            logger.log(msg, color=Colors.BRIGHT_RED)
+            await asyncio.sleep(2)
             continue
         finally:
-            if 'browser' in locals():
-                await browser.close()
+            await browser.close()
     else:
         msg = f'⚠️ Después de {intento} intentos no se pudo completar la operación'
+        io.emit(
+            event=EmitEvent.SAP,
+            data={'message': msg, 'date': dateCurrent()}
+        )
         logger.log(msg, color=Colors.YELLOW)
         return {
             'success': False,

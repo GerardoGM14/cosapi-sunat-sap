@@ -13,10 +13,10 @@ async def process_modal_downloads_one_by_one(modal: Locator, page: Page, folder:
     files_count = await list_items.count()
     
     if files_count == 0:
-        logger.log("  No se encontraron adjuntos en este modal.", Colors.YELLOW)
+        logger.log("\tNo se encontraron adjuntos en este modal.", Colors.YELLOW)
         return
 
-    logger.log(f"  > Detectados {files_count} archivos. Iniciando descarga individual...", Colors.MAGENTA)
+    logger.log(f"\t> Detectados {files_count} archivos. Iniciando descarga individual...", Colors.MAGENTA)
 
     for j in range(files_count):
         all_checks = modal.locator("div.sapMCb input[type='CheckBox']")

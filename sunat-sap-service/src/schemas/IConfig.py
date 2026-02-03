@@ -1,4 +1,5 @@
-from typing import TypedDict
+from typing import TypedDict, Optional
+
 
 class BaseConfig(TypedDict):
     folder: str
@@ -31,3 +32,4 @@ class ISunat(BaseConfig):
 class IArgs(TypedDict):
     sap: ISap
     sunat: ISunat
+    socket_url: Optional[str] = None

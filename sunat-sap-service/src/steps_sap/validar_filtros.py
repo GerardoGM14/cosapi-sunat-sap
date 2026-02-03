@@ -1,23 +1,23 @@
+import asyncio
 from playwright.sync_api import FrameLocator
 from playwright.async_api import TimeoutError
 from src.logger.colored_logger import ColoredLogger, Colors
 from src.schemas.IReturn import IReturn
 
-logger = ColoredLogger(disableModule=True)
+logger = ColoredLogger(disableModule=False)
 
 
 async def validar_filtros(frame: FrameLocator) -> IReturn:
     try:
         try:
-            await frame.locator(
-                "span.sapMMsgBoxText",
-                has_text="No se encontraron resultados"
-            ).wait_for(timeout=3000, state="visible")
-            
-            await frame.locator(
-                "span.sapMMsgBoxClose"
-            ).click()
+            texto_warning = frame.locator('(//div[@role="alertdialog" and .//span[contains(text(), "No se encontraron resultados")]]//button)[1]')
+            await texto_warning.wait_for(timeout=8000, state="visible")
+            await texto_warning.click()
 
+            logger.log("⚠️ No Se encontraron resultados", Colors.GREEN, force_show=True)
+            
+            await asyncio.sleep(1)
+            
             return {
                 'success': False,
                 'error_system': False,
@@ -25,15 +25,13 @@ async def validar_filtros(frame: FrameLocator) -> IReturn:
                 'frame': frame
             }
         except TimeoutError as e:
-            logger.log(f"TimeoutError en validar_filtros: {e}", Colors.YELLOW, force_show=True)
+            logger.log(f"TimeoutError en validar_filtros: {e}", Colors.YELLOW, show=False)
             pass
 
-        #  comprobar que exista al menos un resultado en la tabla y obtener su texto
         await frame.locator(
             "xpath=//table[contains(@id, 'idTableFacturas-table')]/tbody/tr[contains(@class, 'sapUiTableRow')]"
         ).first.wait_for(timeout=5000, state="visible")
 
-        # Obtener el texto de la primera fila visible
         first_row_text = await frame.locator(
             "xpath=//table[contains(@id, 'idTableFacturas-table')]/tbody/tr[contains(@class, 'sapUiTableRow')][1]"
         ).text_content()

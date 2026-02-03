@@ -11,29 +11,17 @@ Para cambiar el método, se puede establecer la variable de entorno `CONFIG_METH
 - `env` (por defecto): Utiliza las variables de entorno (recomendado para producción).
 - `console`: Utiliza los argumentos pasados por la línea de comandos.
 
-## Modo Headless (Visualización del Navegador)
-
-Por defecto, el bot se ejecuta en modo **Headless** (sin interfaz gráfica) para mayor compatibilidad con servidores.
-
-Si deseas ver el navegador mientras trabaja (útil para depuración en entornos con Escritorio/Desktop), agrega la siguiente variable a tu archivo `.env`:
-
-```env
-HEADLESS=false
-```
-
-O configúrala en tu sistema antes de ejecutar.
-
 ## 1. Uso a través de Variables de Entorno (`.env`)
 
 Este es el método recomendado, especialmente para entornos de producción, ya que evita exponer datos sensibles en la línea de comandos.
 
 ### Pasos:
 
-1.  Crea un archivo llamado `.env` en la raíz del proyecto (`d:\cosapi\.env`).
+1.  Crea un archivo llamado `.env` en la raíz del proyecto (`d:\\cosapi\\.env`).
 2.  Añade las siguientes variables al archivo con sus respectivos valores:
 
     ```env
-    FOLDER="d:\cosapi\output"
+    FOLDER="d:\\cosapi\\output"
     CODE_SOCIEDAD="PE01"
     DATE="17/01/2026"
     RUC_SUNAT="12345678901"
@@ -41,7 +29,6 @@ Este es el método recomendado, especialmente para entornos de producción, ya q
     PASSWORD_SUNAT="testpass"
     CORREO_SAP="test@sap.com"
     PASSWORD_SAP="sappass"
-    HEADLESS=true
     ```
 
 3.  El script leerá automáticamente estas variables al ejecutarse.
@@ -53,7 +40,7 @@ Este método es útil para pruebas rápidas o desarrollo. Los argumentos se pasa
 ### Ejemplo de uso:
 
 ```bash
-python main.py --folder "d:\cosapi\output" --code_sociedad "PE01" --date "17/01/2026" --ruc_sunat "12345678901" --user_sunat "testuser" --password_sunat "testpass" --correo_sap "test@sap.com" --password_sap "sappass"
+python main.py --folder "d:\\cosapi\\output" --code_sociedad "PE01" --date "17/01/2026" --ruc_sunat "12345678901" --user_sunat "testuser" --password_sunat "testpass" --correo_sap "test@sap.com" --password_sap "sappass"
 ```
 
 Asegúrate de que el gestor de configuración (`manager_args.py`) esté configurado para usar el método `console` si deseas utilizar esta opción.
