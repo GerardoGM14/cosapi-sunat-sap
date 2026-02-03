@@ -22,6 +22,11 @@ async def appSunat(args: ISunat) -> IReturn:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=False)
                 page = await browser.new_page()
+
+                # --- Listeners para logs del navegador ---
+                page.on("console", lambda msg: logger.log(f"🌐 [CONSOLE] {msg.type}: {msg.text}", color=Colors.MAGENTA))
+                page.on("pageerror", lambda err: logger.log(f"🔥 [PAGE ERROR] {err}", color=Colors.RED))
+                # -----------------------------------------
                 
                 await page.goto('https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm')
                 

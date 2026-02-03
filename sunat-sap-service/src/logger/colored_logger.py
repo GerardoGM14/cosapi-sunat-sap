@@ -1,4 +1,7 @@
 from typing import Optional, Literal
+import os
+from datetime import datetime
+import re
 
 
 class Colors:
@@ -25,9 +28,29 @@ class Colors:
 
 class ColoredLogger:
     enableLogGlobal = True
+    LOG_DIR = "logs"
+    LOG_FILE = "app.log"
     
     def __init__(self, disableModule: Optional[bool] = False):
-        self.disableModule = disableModule  
+        self.disableModule = disableModule
+        self._ensure_log_dir()
+        
+    def _ensure_log_dir(self):
+        if not os.path.exists(self.LOG_DIR):
+            os.makedirs(self.LOG_DIR)
+
+    def _remove_ansi_codes(self, text: str) -> str:
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub('', text)
+
+    def _write_to_file(self, message: str):
+        try:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            clean_message = self._remove_ansi_codes(message)
+            with open(os.path.join(self.LOG_DIR, self.LOG_FILE), "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] {clean_message}\n")
+        except Exception:
+            pass # Fail silently for file logging if permissions/etc fail
         
     def log(
         self,
@@ -44,3 +67,4 @@ class ColoredLogger:
             
         if show:
             print(f"{color}{message}{Colors.RESET}")
+            self._write_to_file(message)

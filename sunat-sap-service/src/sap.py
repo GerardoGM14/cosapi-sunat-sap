@@ -23,6 +23,11 @@ async def appSap(args: ISap) -> IReturn:
                 browser = await p.chromium.launch(headless=False)
                 page = await browser.new_page()
 
+                # --- Listeners para logs del navegador ---
+                page.on("console", lambda msg: logger.log(f"🌐 [CONSOLE] {msg.type}: {msg.text}", color=Colors.MAGENTA))
+                page.on("pageerror", lambda err: logger.log(f"🔥 [PAGE ERROR] {err}", color=Colors.RED))
+                # -----------------------------------------
+
                 await page.set_viewport_size({"width": 1600, "height": 1000})
                 
                 await page.goto("https://dev-f074wlvi.launchpad.cfapps.us10.hana.ondemand.com/site/portalProveedores#Shell-home")
