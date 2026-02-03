@@ -19,7 +19,7 @@ class _SocketManager:
         if self.socket_client and not self.socket_client.is_connected:
             self.socket_client.connect()
         elif not self.socket_client:
-            ColoredLogger().log("Error: Socket Manager no inicializado. Llama a socket_manager.initialize(url) primero.", color=Colors.RED)
+            ColoredLogger().log("Error: Socket Manager no inicializado. Llama a socket_manager.initialize(url) primero.", color=Colors.RED, send_to_socket=False)
 
 
     def disconnect(self):
@@ -30,6 +30,6 @@ class _SocketManager:
         if self.socket_client and self.socket_client.is_connected:
             self.socket_client.emit(event, data)
         else:
-            ColoredLogger().log(f"No se puede emitir evento '{event}', socket no conectado o inicializado.", color=Colors.YELLOW)
+            ColoredLogger().log(f"No se puede emitir evento '{event}', socket no conectado o inicializado.", color=Colors.YELLOW, send_to_socket=False)
 
 socket_manager = _SocketManager()
