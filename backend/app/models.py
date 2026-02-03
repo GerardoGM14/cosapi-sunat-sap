@@ -237,6 +237,7 @@ class MUsuario(Base):
     fBaja = Column(DateTime)
     iUsuarioBaja = Column(BigInteger)
     lActivo = Column(Boolean, default=True)
+    #comentario
 
     rol = relationship("MRol", back_populates="usuarios")
     ejecuciones = relationship("DEjecucion", back_populates="usuario")
