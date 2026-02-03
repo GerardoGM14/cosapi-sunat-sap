@@ -51,3 +51,9 @@ def read_root():
 async def startup_event():
     from app.scheduler import start_scheduler
     start_scheduler()
+
+# Integración de Socket.IO
+import socketio
+from app.socket_manager import sio
+# Envolver la aplicación FastAPI con Socket.IO
+app = socketio.ASGIApp(sio, other_asgi_app=app)

@@ -11,3 +11,4 @@ openpyxl
 requests
 python-dotenv
 sqlalchemy
+python-socketio
