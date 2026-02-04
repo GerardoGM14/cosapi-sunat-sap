@@ -28,14 +28,18 @@ export class AppConfigService {
     
     if (isLocalhost) {
       // En Windows (Local), aseguramos que apunte al backend local
-      // Si config.json ya tiene localhost:8001/api, está bien.
       if (this.config.apiUrl === '/api') {
           this.config.apiUrl = 'http://localhost:8001/api';
       }
     } else {
-      // En Linux (Servidor/Producción), usar ruta relativa para que Nginx maneje el proxy
-      this.config.apiUrl = '/api';
-      console.log(`🔧 Production detected (${currentHost}). Using relative API path: ${this.config.apiUrl}`);
+      // En Linux/Remoto (192.168.x.x, etc.)
+      // Opción 1: Usar Nginx Proxy (Requiere configuración de sockets en Nginx) -> this.config.apiUrl = '/api';
+      // Opción 2: Conectar directo al puerto 8001 (Más fácil, evita configurar Nginx)
+      
+      const protocol = window.location.protocol; // http: o https:
+      this.config.apiUrl = `${protocol}//${currentHost}:8001/api`;
+      
+      console.log(`🔧 Remote environment detected (${currentHost}). Auto-configuring API to: ${this.config.apiUrl}`);
     }
   }
 

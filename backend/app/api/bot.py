@@ -170,6 +170,20 @@ async def run_bot_logic(config: BotConfig):
                         clean_line = ansi_escape.sub('', line).strip()
                         
                         if clean_line:
+                            # Filter: Only show logs with specific icons or keywords (User Request)
+                            # Keep: ✅ (Success), ⚠️/⚠ (Warning), ❌ (Error), 📂 (Folder), 🔍 (Search/Process)
+                            # Also keep explicit "Error" or "Exception" text
+                            allowed_markers = ["✅", "⚠️", "⚠", "❌", "📂", "🔍", "Error", "Exception", "Fallido"]
+                            
+                            # Filter out technical/debug logs
+                            forbidden_markers = ["Emitiendo evento", "{'message':", "{'date':"]
+
+                            if any(bad in clean_line for bad in forbidden_markers):
+                                continue
+
+                            if not any(ok in clean_line for ok in allowed_markers):
+                                continue
+
                             # Add checkmark if it was green (for frontend styling)
                             if is_green and "✅" not in clean_line:
                                 clean_line = f"✅ {clean_line}"
@@ -177,7 +191,7 @@ async def run_bot_logic(config: BotConfig):
                             print(f"🤖 [BOT] {clean_line}")
                             asyncio.run_coroutine_threadsafe(
                                 sio.emit('log:bot', {
-                                    'date': datetime.now().strftime("%H:%M:%S"),
+                                    'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                     'message': clean_line
                                 }),
                                 event_loop

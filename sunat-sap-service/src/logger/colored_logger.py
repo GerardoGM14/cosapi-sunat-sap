@@ -71,21 +71,24 @@ class ColoredLogger:
             self._write_to_file(message)
             
         if send_to_socket:
-            try:
-                # Lazy import to avoid circular dependency
-                from src.socket_client.manager import socket_manager
-                from src.schemas.ISocket import EmitEvent
-                from src.utils.date_current import dateCurrent
-                
-                # We only try to emit if the manager is initialized and connected to avoid recursive logs
-                # socket_manager.emit already checks for connection, but if it fails it logs with send_to_socket=False
-                # so it is safe to call it here.
-                # However, to be extra safe and avoid overhead if not connected:
-                if socket_manager.socket_client and socket_manager.socket_client.is_connected:
-                    # Clean ansi codes for socket message
-                    clean_msg = self._remove_ansi_codes(message)
-                    socket_manager.emit(EmitEvent.LOG, {'message': clean_msg, 'date': dateCurrent()})
-            except ImportError:
-                pass # Should not happen in standard execution
-            except Exception:
-                pass # Fail silently to avoid breaking the logger
+            # DISABLED: We disable direct socket logging to prevent duplication.
+            # The backend (bot.py) already captures stdout, filters it, and emits log:bot events.
+            pass
+            # try:
+            #     # Lazy import to avoid circular dependency
+            #     from src.socket_client.manager import socket_manager
+            #     from src.schemas.ISocket import EmitEvent
+            #     from src.utils.date_current import dateCurrent
+            #     
+            #     # We only try to emit if the manager is initialized and connected to avoid recursive logs
+            #     # socket_manager.emit already checks for connection, but if it fails it logs with send_to_socket=False
+            #     # so it is safe to call it here.
+            #     # However, to be extra safe and avoid overhead if not connected:
+            #     if socket_manager.socket_client and socket_manager.socket_client.is_connected:
+            #         # Clean ansi codes for socket message
+            #         clean_msg = self._remove_ansi_codes(message)
+            #         socket_manager.emit(EmitEvent.LOG, {'message': clean_msg, 'date': dateCurrent()})
+            # except ImportError:
+            #     pass # Should not happen in standard execution
+            # except Exception:
+            #     pass # Fail silently to avoid breaking the logger
