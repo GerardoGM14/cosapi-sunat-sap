@@ -9,7 +9,8 @@ logger = ColoredLogger()
 class SocketClient:
     def __init__(self, server_url: str):
         self.server_url = server_url
-        self.sio = socketio.Client()
+        # Use /api/socket.io to match backend configuration
+        self.sio = socketio.Client(socketio_path='api/socket.io')
         self.is_connected = False
         self._register_default_events()
 

@@ -52,4 +52,5 @@ async def startup_event():
     from app.scheduler import start_scheduler
     start_scheduler()
 
-app = socketio.ASGIApp(sio, other_asgi_app=app)
+# Mount Socket.IO at /api/socket.io to reuse Nginx /api proxy
+app = socketio.ASGIApp(sio, other_asgi_app=app, socketio_path='api/socket.io')

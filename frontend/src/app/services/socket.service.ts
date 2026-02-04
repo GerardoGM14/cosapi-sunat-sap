@@ -27,7 +27,7 @@ export class SocketService {
     console.log('Connecting to socket at:', socketUrl);
 
     this.socket = io(socketUrl, {
-      path: '/socket.io',
+      path: '/api/socket.io', // Changed to /api/socket.io to work through Nginx /api proxy
       transports: ['websocket', 'polling'],
       autoConnect: true
     });
