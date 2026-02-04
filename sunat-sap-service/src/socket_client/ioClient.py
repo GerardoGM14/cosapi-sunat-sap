@@ -10,7 +10,7 @@ class SocketClient:
     def __init__(self, server_url: str):
         self.server_url = server_url
         # Use /api/socket.io to match backend configuration
-        self.sio = socketio.Client(socketio_path='api/socket.io')
+        self.sio = socketio.Client()
         self.is_connected = False
         self._register_default_events()
 
@@ -34,6 +34,13 @@ class SocketClient:
 
     def connect(self):
         try:
+            # Try connecting with the specific path
+            self.sio.connect(self.server_url, socketio_path='/api/socket.io')
+        except TypeError:
+             # Fallback for older versions that don't support socketio_path in connect
+             # or if it was expected in Client constructor but failed there too.
+             # We try without path (defaulting to /socket.io)
+            logger.log("Advertencia: 'socketio_path' no soportado, intentando conexión por defecto...", Colors.YELLOW)
             self.sio.connect(self.server_url)
         except socketio.exceptions.ConnectionError as e:
             logger.log(f"Error de conexión: {e}", Colors.RED)
