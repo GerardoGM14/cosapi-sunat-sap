@@ -4,6 +4,9 @@ import subprocess
 import sys
 import os
 import asyncio
+import threading
+from datetime import datetime
+from app.socket_manager import sio
 
 router = APIRouter()
 
@@ -32,45 +35,26 @@ async def run_bot_endpoint(config: BotConfig):
 
 async def run_bot_logic(config: BotConfig):
     try:
-        # Validar carpeta
         if not config.general.folder:
             raise HTTPException(status_code=400, detail="La carpeta de salida es requerida")
-
-        # Construir el comando
-        # python sunat-sap-service/app.py --folder "..." ...
-        
-        # Asumimos que sunat-sap-service está en el directorio raíz del proyecto
-        # y que el backend se ejecuta desde backend/ o root.
-        # Ajustamos la ruta base para obtener rutas absolutas
         current_dir = os.getcwd()
-        
-        # Intentar localizar la carpeta del servicio subiendo un nivel si estamos en backend
         possible_service_dir = os.path.abspath(os.path.join(current_dir, "..", "sunat-sap-service"))
         
         if not os.path.exists(possible_service_dir):
-             # Si no existe, probar si estamos en la raíz y la carpeta está ahí
              possible_service_dir = os.path.abspath(os.path.join(current_dir, "sunat-sap-service"))
         
         service_dir = possible_service_dir
         script_path = os.path.join(service_dir, "app.py")
         
         if not os.path.exists(script_path):
-             # Fallback hardcoded por si acaso la estructura es muy distinta
              if sys.platform == "win32":
                 script_path = r"c:\Users\Soporte\Documents\Proyectos\ocr-cosapi-full\sunat-sap-service\app.py"
              else:
-                # Fallback común en Linux si se sigue la estructura estándar
                 script_path = os.path.join(os.getcwd(), "sunat-sap-service", "app.py")
                 if not os.path.exists(script_path):
                      script_path = "/opt/ocr-cosapi-full/sunat-sap-service/app.py"
 
              service_dir = os.path.dirname(script_path)
-
-        # Determinar el intérprete de Python a usar
-        # Prioridad 1: .venv dentro de sunat-sap-service (si existiera)
-        # Prioridad 2: .venv del backend (actualmente en uso)
-        # Prioridad 3: sys.executable actual
-        
         python_executable = sys.executable
         
         if sys.platform == "win32":
@@ -82,16 +66,13 @@ async def run_bot_logic(config: BotConfig):
             python_executable = possible_service_venv
 
         env = os.environ.copy()
-        env["CONFIG_METHOD"] = "console" # Force console method to use CLI args
-        env["PYTHONPATH"] = service_dir # Set pythonpath to service root
-        env["HEADLESS"] = "false" # Desactivar headless para ver el navegador
+        env["CONFIG_METHOD"] = "console"
+        env["PYTHONPATH"] = service_dir
+        env["HEADLESS"] = "false"
+        env["PYTHONUNBUFFERED"] = "1"
 
-        # Configuración para mostrar navegador en Linux (si no es headless)
         if sys.platform == "linux":
-            # Si no hay DISPLAY o está vacío, intentamos configurarlo
             if not env.get("DISPLAY"):
-                # Primero, intentamos leer si existe un archivo .env en sunat-sap-service que tenga DISPLAY
-                # Esto permite configuración manual por parte del usuario
                 env_file_path = os.path.join(service_dir, ".env")
                 display_from_env = None
                 if os.path.exists(env_file_path):
@@ -108,11 +89,9 @@ async def run_bot_logic(config: BotConfig):
                     env["DISPLAY"] = display_from_env
                     print(f"ℹ️ Usando DISPLAY desde .env: {display_from_env}")
                 else:
-                    # Fallback por defecto.
                     print("⚠️ Variable DISPLAY no encontrada o vacía. Asignando DISPLAY=:1 (predeterminado para este servidor)")
                     env["DISPLAY"] = ":1"
-                
-                # Intentar encontrar el archivo .Xauthority del usuario actual
+
                 home_dir = os.path.expanduser("~")
                 xauth_path = os.path.join(home_dir, ".Xauthority")
                 
@@ -120,7 +99,6 @@ async def run_bot_logic(config: BotConfig):
                     env["XAUTHORITY"] = xauth_path
                     print(f"ℹ️ Usando XAUTHORITY: {xauth_path}")
                 else:
-                    # Fallback
                     possible_xauth = "/home/sertech/.Xauthority"
                     if os.path.exists(possible_xauth):
                          env["XAUTHORITY"] = possible_xauth
@@ -128,41 +106,67 @@ async def run_bot_logic(config: BotConfig):
             else:
                 print(f"ℹ️ Usando DISPLAY existente: {env['DISPLAY']}")
         
-            # Intentar dar permisos con xhost (solo si tenemos DISPLAY)
             if env.get("DISPLAY"):
                 try:
                     subprocess.run(["xhost", "+local:"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
                 except Exception as e:
                     print(f"⚠️ No se pudo ejecutar xhost: {e}")
 
-
-        # Normalizar ruta a formato Windows (backslashes)
         folder_path = os.path.normpath(config.general.folder)
 
-        # Construir argumentos para CLI
         args = [
             python_executable,
             script_path,
             "--folder", folder_path,
-            "--date", config.general.fecha, # Changed from --fecha to --date as per args_console.py
-            "--ruc_sunat", config.sunat.ruc, # Changed from --ruc to --ruc_sunat
-            "--user_sunat", config.sunat.usuario, # Changed from --usuario-sunat to --user_sunat
-            "--password_sunat", config.sunat.claveSol, # Changed from --clave-sunat to --password_sunat
-            "--correo_sap", config.sap.usuario, # Changed from --usuario-sap to --correo_sap
-            "--password_sap", config.sap.password, # Changed from --password-sap to --password_sap
-            "--code_sociedad", config.general.sociedad # Changed from --sociedad to --code_sociedad
+            "--date", config.general.fecha, 
+            "--ruc_sunat", config.sunat.ruc, 
+            "--user_sunat", config.sunat.usuario, 
+            "--password_sunat", config.sunat.claveSol, 
+            "--correo_sap", config.sap.usuario, 
+            "--password_sap", config.sap.password, 
+            "--code_sociedad", config.general.sociedad 
         ]
         
         print(f"🚀 Ejecutando bot: {' '.join(args)}")
         
+        # Capture output and stream via socket
         process = subprocess.Popen(
             args,
             cwd=service_dir,
             env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            encoding='utf-8'
         )
+        
+        loop = asyncio.get_running_loop()
+
+        def stream_output(proc, event_loop):
+            try:
+                print("🔵 Iniciando captura de logs del bot...")
+                for line in proc.stdout:
+                    if line:
+                        clean_line = line.strip()
+                        print(f"🤖 [BOT STDOUT] {clean_line}")
+                        if clean_line:
+                            asyncio.run_coroutine_threadsafe(
+                                sio.emit('log:bot', {
+                                    'date': datetime.now().strftime("%H:%M:%S"),
+                                    'message': clean_line
+                                }),
+                                event_loop
+                            )
+            except Exception as e:
+                print(f"Error streaming logs: {e}")
+            finally:
+                print("🔴 Fin de captura de logs del bot")
+                proc.stdout.close()
+
+        t = threading.Thread(target=stream_output, args=(process, loop))
+        t.daemon = True
+        t.start()
         
         return {"message": "Bot iniciado correctamente", "pid": process.pid}
         

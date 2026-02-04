@@ -1,4 +1,5 @@
 import json
+import sys
 from typing import Optional
 from src.utils.args_console import get_args_console
 from src.utils.args_env import get_args_env
@@ -14,7 +15,8 @@ def get_args() -> Optional[IArgs]:
         config_method = ConfigEnv.CONFIG_METHOD
 
         args: IArgs
-        if config_method and config_method.lower() == 'console':
+        # Si hay argumentos en consola o se especifica 'console', usar args_console
+        if (len(sys.argv) > 1 and config_method != 'env') or (config_method and config_method.lower() == 'console'):
             args = get_args_console()
         else:
             args = get_args_env()

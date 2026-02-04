@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { AppConfigService } from '../../../../services/app-config.service';
 import { SociedadService } from '../../../../services/sociedad.service';
 import { ProveedorService } from '../../../../services/proveedor.service';
+import { SocketService } from '../../../../services/socket.service';
+import { Subscription } from 'rxjs';
 
 const SAP_SOCIEDADES = [
     { id: 'PE01', name: 'PE01 - Country Template PE' },
@@ -83,7 +85,8 @@ export class EjecucionesComponent implements OnInit {
     private http: HttpClient, 
     private configService: AppConfigService,
     private sociedadService: SociedadService,
-    private proveedorService: ProveedorService
+    private proveedorService: ProveedorService,
+    private socketService: SocketService
   ) {
     // Click outside listener for calendar
     document.addEventListener('click', (e: any) => {
@@ -418,6 +421,7 @@ export class EjecucionesComponent implements OnInit {
   isLogModalOpen = false;
   isLogModalClosing = false;
   selectedLogTask: any = null;
+  private logSubscription: Subscription | null = null;
 
   openLogModal(task: any, event?: Event): void {
     if (event) {
@@ -426,10 +430,33 @@ export class EjecucionesComponent implements OnInit {
     this.selectedLogTask = task;
     this.isLogModalOpen = true;
     this.isLogModalClosing = false;
+
+    // Subscribe to socket logs
+    this.logSubscription = this.socketService.onLog().subscribe((logData: any) => {
+      if (!this.selectedLogTask.logs) {
+        this.selectedLogTask.logs = [];
+      }
+      
+      // Ensure we are adding to the currently selected task logs
+      // Note: In a real multi-user scenario, we might want to filter by RUC or ID in the log message
+      // But for now, we just append logs as they come in while the modal is open.
+      this.selectedLogTask.logs.push({
+        fecha: logData.date,
+        configuracion: this.selectedLogTask.nombre, // Or use data from log if available
+        estado: logData.message
+      });
+    });
   }
 
   closeLogModal(): void {
     this.isLogModalClosing = true;
+    
+    // Unsubscribe to avoid memory leaks
+    if (this.logSubscription) {
+      this.logSubscription.unsubscribe();
+      this.logSubscription = null;
+    }
+
     setTimeout(() => {
       this.isLogModalOpen = false;
       this.isLogModalClosing = false;

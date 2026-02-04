@@ -14,9 +14,7 @@ router = APIRouter()
 
 @router.get("/check-service")
 async def check_service():
-    """Verifica si el servicio de Sunat/Sap (scripts) es accesible y su configuración."""
     try:
-        # Lógica similar a bot.py para encontrar la carpeta
         current_dir = os.getcwd()
         possible_service_dir = os.path.abspath(os.path.join(current_dir, "..", "sunat-sap-service"))
         if not os.path.exists(possible_service_dir):
@@ -48,15 +46,13 @@ async def check_service():
 async def list_folders(payload: dict = Body(...)):
     try:
         current_path = payload.get("path")
-        
-        # Si no hay path, usar el directorio actual o C:\
+
         if not current_path or current_path == "":
             current_path = os.getcwd()
             
         if not os.path.exists(current_path):
             current_path = os.getcwd()
 
-        # Listar directorios
         items = []
         try:
             with os.scandir(current_path) as entries:
@@ -64,13 +60,12 @@ async def list_folders(payload: dict = Body(...)):
                     if entry.is_dir():
                         items.append(entry.name)
         except PermissionError:
-            pass # Ignorar carpetas sin permiso
+            pass
 
         items.sort()
-        
-        # Obtener padre
+
         parent_path = os.path.dirname(current_path)
-        if parent_path == current_path: # Root
+        if parent_path == current_path:
             parent_path = None
 
         return {
@@ -86,7 +81,6 @@ async def list_folders(payload: dict = Body(...)):
 @router.get("/select-folder")
 async def select_folder():
     try:
-        # Usar Tkinter en un subproceso para abrir el diálogo nativo moderno
         cmd = [
             sys.executable, 
             "-c", 
@@ -123,7 +117,6 @@ class SapConfig(BaseModel):
 
 def get_service_params_dir():
     current_dir = os.getcwd()
-    # Logic to find sunat-sap-service
     possible_service_dir = os.path.abspath(os.path.join(current_dir, "..", "sunat-sap-service"))
     if not os.path.exists(possible_service_dir):
          possible_service_dir = os.path.abspath(os.path.join(current_dir, "sunat-sap-service"))
@@ -149,24 +142,19 @@ async def get_sap_config():
 @router.post("/config/sap")
 async def save_sap_config(config: SapConfig, db: Session = Depends(get_db)):
     try:
-        # 1. Guardar en JSON (Compatibilidad)
         params_dir = get_service_params_dir()
         file_path = os.path.join(params_dir, "sap_config.json")
         
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(config.dict(), f, indent=4)
-            
-        # 2. Guardar en BD (MSap)
-        # Buscar si ya existe este usuario
+
         db_sap = db.query(MSap).filter(MSap.tUsuario == config.usuario).first()
         
         if db_sap:
-            # Actualizar
             db_sap.tClave = config.password
             db_sap.fModificacion = datetime.utcnow()
             db_sap.lActivo = True
         else:
-            # Crear nuevo
             new_sap = MSap(
                 tUsuario=config.usuario,
                 tClave=config.password,

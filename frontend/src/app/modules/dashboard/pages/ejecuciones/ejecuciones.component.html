@@ -499,14 +499,23 @@
       </thead>
       <tbody>
         <tr *ngFor="let log of selectedLogTask?.logs">
-          <td>{{ log.fecha }}</td>
+          <td style="white-space: nowrap; font-size: 0.8rem;">{{ log.fecha }}</td>
           <td>{{ log.configuracion }}</td>
           <td>
-            <span class="log-status-badge" 
+            <!-- Check if status matches standard short statuses -->
+            <span *ngIf="['Completado', 'Fallido'].includes(log.estado) || log.estado.includes('Proceso')" 
+                  class="log-status-badge" 
                   [ngClass]="{'status-completed': log.estado === 'Completado', 'status-process': log.estado.includes('Proceso'), 'status-failed': log.estado === 'Fallido'}">
               <span *ngIf="log.estado === 'Completado'" class="icon-check">✔</span>
               <span *ngIf="log.estado.includes('Proceso')" class="icon-spinner"></span>
               {{ log.estado }}
+            </span>
+            
+            <!-- For detailed logs (green text) -->
+            <span *ngIf="!(['Completado', 'Fallido'].includes(log.estado) || log.estado.includes('Proceso'))"
+                  [style.color]="log.estado.includes('✅') ? '#27ae60' : 'inherit'"
+                  [style.fontWeight]="log.estado.includes('✅') ? '600' : 'normal'">
+                  {{ log.estado }}
             </span>
           </td>
         </tr>

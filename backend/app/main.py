@@ -1,8 +1,10 @@
+import socketio
+from app.socket_manager import sio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, utils, bot, crud
 from app.database import engine, Base, SessionLocal
-from app import models # Importar modelos para que SQLAlchemy los registre
+from app import models 
 from app.models import MRol
 
 # Crear tablas si no existen
@@ -28,16 +30,14 @@ seed_roles()
 
 app = FastAPI(title="AutoSUN - Cosapi OCR API", version="1.0.0")
 
-# Configuración CORS (Más permisiva para evitar errores en red local)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex="https?://.*",  # Permite cualquier origen http o https (ideal para redes locales)
+    allow_origin_regex="https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Incluir routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(utils.router, prefix="/api/utils", tags=["Utils"])
 app.include_router(bot.router, prefix="/api/bot", tags=["Bot"])
@@ -52,8 +52,4 @@ async def startup_event():
     from app.scheduler import start_scheduler
     start_scheduler()
 
-# Integración de Socket.IO
-import socketio
-from app.socket_manager import sio
-# Envolver la aplicación FastAPI con Socket.IO
 app = socketio.ASGIApp(sio, other_asgi_app=app)

@@ -12,7 +12,6 @@ import io
 
 router = APIRouter()
 
-# Pydantic Schemas
 class SociedadBase(BaseModel):
     tRuc: str
     tCodigoSap: str | None = None
@@ -82,29 +81,22 @@ class SapResponse(SapBase):
 
 @router.get("/sap-accounts", response_model=List[SapResponse])
 def get_all_sap_accounts(db: Session = Depends(get_db)):
-    """Obtiene todas las cuentas SAP activas"""
     return db.query(MSap).filter(MSap.lActivo == True).all()
 
 @router.get("/sociedades/{ruc}/sap-accounts", response_model=List[SapResponse])
 def get_sociedad_sap_accounts(ruc: str, db: Session = Depends(get_db)):
-    """Obtiene todas las cuentas SAP asociadas a una sociedad"""
-    # Buscar por RUC
     sociedad = db.query(MSociedad).filter(MSociedad.tRuc == ruc).first()
     if not sociedad:
-        # Intentar buscar por ID de sociedad (ej: PE02) si el RUC no coincide
         sociedad = db.query(MSociedad).filter(MSociedad.tCodigoSap == ruc).first()
         
     if not sociedad:
         raise HTTPException(status_code=404, detail="Sociedad no encontrada")
-        
-    # Obtener cuentas a través de la relación
     cuentas = db.query(MSap).join(MSapSociedad).filter(MSapSociedad.tRuc == sociedad.tRuc, MSapSociedad.lActivo == True).all()
     
     return cuentas
 
 @router.post("/sociedades/{ruc}/sap-accounts/{sap_id}")
 def associate_sap_to_sociedad(ruc: str, sap_id: int, db: Session = Depends(get_db)):
-    """Asocia una cuenta SAP a una sociedad"""
     sociedad = db.query(MSociedad).filter(MSociedad.tRuc == ruc).first()
     if not sociedad:
         raise HTTPException(status_code=404, detail="Sociedad no encontrada")
@@ -112,8 +104,6 @@ def associate_sap_to_sociedad(ruc: str, sap_id: int, db: Session = Depends(get_d
     sap = db.query(MSap).filter(MSap.iMSAP == sap_id).first()
     if not sap:
         raise HTTPException(status_code=404, detail="Cuenta SAP no encontrada")
-        
-    # Verificar si ya existe la relación
     exists = db.query(MSapSociedad).filter(
         MSapSociedad.tRuc == ruc,
         MSapSociedad.iMSAP == sap_id
@@ -125,8 +115,7 @@ def associate_sap_to_sociedad(ruc: str, sap_id: int, db: Session = Depends(get_d
     new_relation = MSapSociedad(tRuc=ruc, iMSAP=sap_id)
     db.add(new_relation)
     db.commit()
-    
-    # Guardar parámetros actualizados
+
     save_parameters_to_file(db)
     
     return {"message": "Cuenta SAP asociada exitosamente"}
@@ -180,14 +169,12 @@ def update_usuario(user_id: int, usuario: UsuarioUpdate, db: Session = Depends(g
     if usuario.tApellidos is not None:
         db_usuario.tApellidos = usuario.tApellidos
     if usuario.tCorreo is not None:
-        # Check uniqueness if email changes
         if usuario.tCorreo != db_usuario.tCorreo:
             existing_user = db.query(MUsuario).filter(MUsuario.tCorreo == usuario.tCorreo).first()
             if existing_user:
                 raise HTTPException(status_code=400, detail="El correo ya está en uso")
         db_usuario.tCorreo = usuario.tCorreo
     if usuario.tClave is not None and usuario.tClave != "":
-         # Only update password if provided
          db_usuario.tClave = get_password_hash(usuario.tClave)
     if usuario.iMRol is not None:
         db_usuario.iMRol = usuario.iMRol
@@ -209,19 +196,11 @@ import os
 import json
 
 def save_parameters_to_file(db: Session):
-    """
-    Guarda todas las sociedades activas en un archivo JSON dentro de sunat-sap-service.
-    Esto permite que el servicio tenga acceso a los parámetros actualizados, incluyendo credenciales SAP.
-    """
     try:
-        # Obtener todas las sociedades con sus cuentas SAP asociadas
-        # Realizamos un LEFT JOIN para obtener sociedades incluso si no tienen SAP asociado
         results = db.query(MSociedad, MSap).\
             outerjoin(MSapSociedad, MSociedad.tRuc == MSapSociedad.tRuc).\
             outerjoin(MSap, MSapSociedad.iMSAP == MSap.iMSAP).\
             all()
-        
-        # Convertir a lista de diccionarios
         data = []
         for sociedad, sap in results:
             item = {
@@ -231,18 +210,16 @@ def save_parameters_to_file(db: Session):
                 "user_sunat": sociedad.tUsuario,
                 "password_sunat": sociedad.tClave,
                 "active": sociedad.lActivo,
-                # Datos SAP (pueden ser nulos si no hay asociación)
                 "sap_user": sap.tUsuario if sap else None,
                 "sap_password": sap.tClave if sap else None
             }
             data.append(item)
-            
-        # Ruta base del servicio
+
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         service_dir = os.path.join(base_dir, "sunat-sap-service")
         
         if not os.path.exists(service_dir):
-            return # Si no existe el directorio, no hacemos nada (puede ser entorno de dev solo backend)
+            return
             
         params_file = os.path.join(service_dir, "parameters.json")
         
@@ -267,8 +244,6 @@ def create_sociedad(sociedad: SociedadCreate, db: Session = Depends(get_db)):
     db.add(new_sociedad)
     db.commit()
     db.refresh(new_sociedad)
-    
-    # Guardar parámetros en archivo
     save_parameters_to_file(db)
     
     return new_sociedad
@@ -285,17 +260,12 @@ def update_sociedad(ruc: str, sociedad: SociedadUpdate, db: Session = Depends(ge
     
     db.commit()
     db.refresh(db_sociedad)
-    
-    # Guardar parámetros en archivo
     save_parameters_to_file(db)
     
     return db_sociedad
 
 @router.delete("/sociedades")
 def delete_bad_sociedades(db: Session = Depends(get_db)):
-    """
-    Elimina sociedades con RUC vacío o inválido que causan errores 405.
-    """
     deleted = db.query(MSociedad).filter((MSociedad.tRuc == "") | (MSociedad.tRuc == None)).delete()
     db.commit()
     if deleted > 0:
@@ -318,7 +288,7 @@ class ProgramacionCreate(BaseModel):
     tNombre: str
     tHora: str
     tDias: List[str]
-    sociedades: List[str] # List of RUCs
+    sociedades: List[str]
     lActivo: bool = True
 
 class ProgramacionResponse(BaseModel):
@@ -393,9 +363,9 @@ class ExecutionHistoryItem(BaseModel):
     estado: str
 
 class ExecutionActiveItem(BaseModel):
-    id: int # ID of Programacion
+    id: int
     nombre: str
-    tipo: str # 'Programación' or 'Manual'
+    tipo: str
     detalle: str
     progreso: int
     logs: List[dict] = []
@@ -406,7 +376,6 @@ class ExecutionDashboardResponse(BaseModel):
 
 @router.get("/sociedades/{ruc}/ejecuciones", response_model=ExecutionDashboardResponse)
 def get_sociedad_ejecuciones(ruc: str, db: Session = Depends(get_db)):
-    # 1. Get Active Schedules (Programaciones) linked to this RUC
     programaciones = db.query(MProgramacion).join(MProgramacionSociedad).filter(
         MProgramacionSociedad.tRuc == ruc,
         MProgramacion.lActivo == True
@@ -423,7 +392,6 @@ def get_sociedad_ejecuciones(ruc: str, db: Session = Depends(get_db)):
             logs=[]
         ))
         
-    # 2. Get History (DEjecucion)
     ejecuciones = db.query(DEjecucion).filter(DEjecucion.tRuc == ruc).order_by(DEjecucion.fRegistro.desc()).limit(10).all()
     
     history_items = []
@@ -434,40 +402,27 @@ def get_sociedad_ejecuciones(ruc: str, db: Session = Depends(get_db)):
             nombre=f"Ejecución #{e.iMEjecucion}",
             tipo="Manual" if e.tTipo == 'M' else "Automático",
             detalle=f"Usuario ID: {e.iUsuarioEjecucion}" if e.iUsuarioEjecucion else "Sistema",
-            estado="Completado" # Default for now
+            estado="Completado"
         ))
         
     return ExecutionDashboardResponse(active=active_items, history=history_items)
 
 @router.post("/programacion/{id}/execute")
 async def execute_programacion_manual(id: int, ruc: Optional[str] = None, db: Session = Depends(get_db)):
-    """
-    Ejecuta manualmente una programación.
-    Crea un registro en DEjecucion.
-    """
-    # Assuming user ID 1 for now as we don't have full auth context here yet or it's optional
-    # Ideally we get current_user from Depends
     user_id = 1 
-    
     execution_ids = await execute_programacion_logic(db, id, ruc, manual_user_id=user_id)
     
     if not execution_ids:
-        # If no executions created, it might be due to missing data or not found
-        # We can return a message but 200 OK
         return {"message": "No se generaron ejecuciones (verifique datos/programación)", "execution_ids": []}
 
     return {"message": "Ejecución iniciada", "execution_ids": execution_ids}
 
 class ExecuteManualRequest(BaseModel):
-    date: str # "DD/MM/YYYY"
+    date: str
 
 @router.post("/sociedades/{ruc}/execute")
 async def execute_sociedad_manual(ruc: str, request: ExecuteManualRequest, db: Session = Depends(get_db)):
-    """
-    Ejecuta manualmente una sociedad para una fecha específica.
-    """
-    user_id = 1 # TODO: Get from auth
-    
+    user_id = 1 # TODO:
     execution_ids = await execute_sociedad_logic(db, [ruc], manual_user_id=user_id, date_str=request.date)
     
     if not execution_ids:
@@ -497,11 +452,8 @@ def get_proveedores(db: Session = Depends(get_db)):
     ).all()
     result = []
     for p in proveedores:
-        # Get Sociedades RUCs and Names
         sociedades = [s.tRucSociedad for s in p.sociedades]
         sociedades_nombres = [s.sociedad.tRazonSocial for s in p.sociedades if s.sociedad]
-
-        # Create a dict from the ORM object and add the extra field
         p_dict = {
             "tRucListaBlanca": p.tRucListaBlanca,
             "tRazonSocial": p.tRazonSocial,
@@ -521,11 +473,9 @@ def update_proveedor_sociedades(ruc: str, update: ListaBlancaSociedadesUpdate, d
     proveedor = db.query(MListaBlanca).filter(MListaBlanca.tRucListaBlanca == ruc).first()
     if not proveedor:
         raise HTTPException(status_code=404, detail="Proveedor no encontrado")
-    
-    # Clear existing
+
     db.query(MListaBlancaSociedad).filter(MListaBlancaSociedad.tRucListaBlanca == ruc).delete()
-    
-    # Add new
+
     for sociedad_ruc in update.sociedades:
         new_relation = MListaBlancaSociedad(tRucListaBlanca=ruc, tRucSociedad=sociedad_ruc)
         db.add(new_relation)
@@ -541,9 +491,6 @@ async def preview_proveedores_excel(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         df = pd.read_excel(io.BytesIO(contents))
-        
-        # Validar columnas requeridas (flexible)
-        # Helper to normalize strings (remove accents)
         import unicodedata
         def normalize_str(s):
             return ''.join(c for c in unicodedata.normalize('NFD', str(s)) if unicodedata.category(c) != 'Mn').upper().strip()
@@ -572,24 +519,21 @@ async def preview_proveedores_excel(file: UploadFile = File(...)):
         for i, row in df.iterrows():
             ruc = str(row[col_ruc]).strip()
             razon_social = str(row[col_razon]).strip()
-            
-            # Clean RUC: remove decimals if float, then remove non-digits
+
             if ruc.endswith('.0'):
                 ruc = ruc[:-2]
-            
-            # Remove any non-digit characters (spaces, hyphens, etc.)
+
             import re
             ruc = re.sub(r'\D', '', ruc)
 
-            # Relaxed validation: just check if we have digits
             if not ruc:
                 continue
             
             preview_data.append({
-                "id": i, # Temporary ID for frontend key
+                "id": i, 
                 "ruc": ruc,
                 "razonSocial": razon_social,
-                "estado": True # Default value
+                "estado": True 
             })
             
         return preview_data
@@ -659,7 +603,6 @@ async def upload_proveedores_excel(file: UploadFile = File(...), db: Session = D
         contents = await file.read()
         df = pd.read_excel(io.BytesIO(contents))
         
-        # Validar columnas requeridas (flexible)
         df.columns = [str(col).upper().strip() for col in df.columns]
         
         col_ruc = None

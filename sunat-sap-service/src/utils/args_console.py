@@ -1,4 +1,5 @@
 import argparse
+import sys
 from pathlib import Path
 from src.schemas.IConfig import IArgs
 
@@ -62,11 +63,28 @@ def get_args_console() -> IArgs:
         help="Contraseña para ingresar a la plataforma SAP"
     )
 
-    # ARGUMENTO OPTIONAL
+    default_socket_url = "http://localhost:8001"
+    
+    if sys.platform != "win32":
+        try:
+            import socket
+            socket.gethostbyname("backend")
+            default_socket_url = "http://backend:8001"
+        except:
+            try:
+                import socket
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                local_ip = s.getsockname()[0]
+                s.close()
+                default_socket_url = f"http://{local_ip}:8001"
+            except:
+                default_socket_url = "http://localhost:8001"
+
     parser.add_argument(
         "--socket_url",
         type=str,
-        default="ws://localhost:3000",
+        default=default_socket_url,
         help="URL del socket para la conexión"
     )
 

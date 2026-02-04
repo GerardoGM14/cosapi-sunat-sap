@@ -6,7 +6,7 @@ from .database import Base
 class MDataSap(Base):
     __tablename__ = "DDATA_SAP"
 
-    iMDataSap = Column(Integer, primary_key=True, index=True) # Changed to Integer for SQLite compatibility (autoincrement)
+    iMDataSap = Column(Integer, primary_key=True, index=True)
     iMEjecucion = Column(Integer, ForeignKey("DEJECUCION.iMEjecucion"))
     tOC = Column(String(50))
     iPosicion = Column(Integer)
@@ -99,7 +99,7 @@ class DSeguimiento(Base):
 class MClaseDocumentoCompra(Base):
     __tablename__ = "MCLASE_DOCUMENTO_COMPRA"
 
-    tClase = Column(String(5), primary_key=True) # Assuming PK based on usage, though not explicit in SQL CREATE but logical
+    tClase = Column(String(5), primary_key=True)
     tDenominacion = Column(String(50))
     iRangoDesde = Column(BigInteger)
     iRangoHasta = Column(BigInteger)
@@ -205,8 +205,8 @@ class MSociedad(Base):
     __tablename__ = "MSOCIEDAD"
 
     tRuc = Column(String(11), primary_key=True, index=True)
-    tCodigoSap = Column(String(10)) # Codigo SAP (ej: PE01)
-    tRazonSocial = Column(String(10)) # Note: SQL says nchar(10), might be short but keeping faithful
+    tCodigoSap = Column(String(10))
+    tRazonSocial = Column(String(10))
     tUsuario = Column(String(50))
     tClave = Column(String)
     iUsuarioBaja = Column(BigInteger)
@@ -237,7 +237,6 @@ class MUsuario(Base):
     fBaja = Column(DateTime)
     iUsuarioBaja = Column(BigInteger)
     lActivo = Column(Boolean, default=True)
-    #comentario
 
     rol = relationship("MRol", back_populates="usuarios")
     ejecuciones = relationship("DEjecucion", back_populates="usuario")
@@ -247,9 +246,9 @@ class MProgramacion(Base):
 
     iMProgramacion = Column(Integer, primary_key=True, index=True)
     tNombre = Column(String(250))
-    tHora = Column(String(5)) # HH:MM
-    tDias = Column(String(100)) # "Lun,Mar,Mie"
-    iSociedadesCount = Column(Integer, default=0) # Cache count for list view
+    tHora = Column(String(5))
+    tDias = Column(String(100))
+    iSociedadesCount = Column(Integer, default=0)
     lActivo = Column(Boolean, default=True)
     fRegistro = Column(DateTime, default=datetime.utcnow)
     

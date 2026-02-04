@@ -41,10 +41,11 @@ class SocketClient:
 
     def emit(self, event: EmitEvent, data: IDataEmit):
         if self.is_connected:
-            logger.log(f"Emitiendo evento {event.value} con datos: {data}", Colors.CYAN)
+            # Importante: send_to_socket=False para evitar bucle infinito (Log -> Socket -> Log -> Socket...)
+            logger.log(f"Emitiendo evento {event.value} con datos: {data}", Colors.CYAN, send_to_socket=False)
             self.sio.emit(event.value, data)
         else:
-            logger.log(f"No se puede emitir el evento {event.value}, no hay conexión.", Colors.RED)
+            logger.log(f"No se puede emitir el evento {event.value}, no hay conexión.", Colors.RED, send_to_socket=False)
 
     def on(self, event, handler=None):
         return self.sio.on(event, handler)
