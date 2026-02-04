@@ -26,6 +26,9 @@ class SocketClient:
 
         @self.sio.on('*')
         def catch_all(event, data):
+            # Ignore log:bot events to prevent infinite loops with the backend
+            if event == 'log:bot':
+                return
             logger.log(f"Evento recibido: {event}, Datos: {data}", Colors.MAGENTA)
 
     def connect(self):

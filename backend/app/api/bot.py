@@ -124,12 +124,23 @@ async def run_bot_logic(config: BotConfig):
             "--password_sunat", config.sunat.claveSol, 
             "--correo_sap", config.sap.usuario, 
             "--password_sap", config.sap.password, 
-            "--code_sociedad", config.general.sociedad 
+            "--code_sociedad", config.general.sociedad
         ]
+        
+        socket_url = os.environ.get("SOCKET_URL")
+        
+        if not socket_url:
+             socket_url = "http://127.0.0.1:8001"
+             print(f"ℹ️ Configuración automática: Usando {socket_url} (Localhost)")
+
+        print(f" Socket URL seleccionada para el bot: {socket_url}")
+        args.extend(["--socket_url", socket_url])
         
         print(f"🚀 Ejecutando bot: {' '.join(args)}")
         
-        # Capture output and stream via socket
+        # Force UTF-8 for the subprocess to avoid UnicodeEncodeError on Windows
+        env["PYTHONIOENCODING"] = "utf-8"
+
         process = subprocess.Popen(
             args,
             cwd=service_dir,
@@ -143,14 +154,27 @@ async def run_bot_logic(config: BotConfig):
         
         loop = asyncio.get_running_loop()
 
+        # Stream output function with debug prints
         def stream_output(proc, event_loop):
+            import re
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            
             try:
                 print("🔵 Iniciando captura de logs del bot...")
                 for line in proc.stdout:
                     if line:
-                        clean_line = line.strip()
-                        print(f"🤖 [BOT STDOUT] {clean_line}")
+                        # Detect if line has green color (validation/success)
+                        is_green = '\033[92m' in line or '\033[32m' in line
+                        
+                        # Clean ANSI codes
+                        clean_line = ansi_escape.sub('', line).strip()
+                        
                         if clean_line:
+                            # Add checkmark if it was green (for frontend styling)
+                            if is_green and "✅" not in clean_line:
+                                clean_line = f"✅ {clean_line}"
+
+                            print(f"🤖 [BOT] {clean_line}")
                             asyncio.run_coroutine_threadsafe(
                                 sio.emit('log:bot', {
                                     'date': datetime.now().strftime("%H:%M:%S"),
