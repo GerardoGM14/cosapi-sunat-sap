@@ -207,6 +207,47 @@ li.active > .nav-item .icon-wrapper svg {
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   padding: 4px;
+  position: relative; /* For Tooltip positioning */
+}
+
+/* Tooltip Styles */
+.btn-options[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 10px;
+  background-color: #2c3e50;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  animation: tooltip-fade 0.2s ease-out forwards;
+  z-index: 1000;
+}
+
+.btn-options[data-tooltip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 4px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #2c3e50 transparent transparent transparent;
+  animation: tooltip-fade 0.2s ease-out forwards;
+  z-index: 1000;
+}
+
+@keyframes tooltip-fade {
+  from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .btn-options:hover {
@@ -445,4 +486,61 @@ li.active > .nav-item .icon-wrapper svg {
   .top-header {
       padding: 0 1rem;
   }
+}
+
+/* --- Full Screen Loader (Cosapi Glassmorphism) --- */
+.fullscreen-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2); /* Transparent base */
+  backdrop-filter: blur(15px); /* Glassmorphism Blur */
+  -webkit-backdrop-filter: blur(15px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+.loader-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Cosapi Spinner Ring with Gradient */
+.cosapi-loader {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  /* Serpiente: Cola transparente a cabeza sólida */
+  background: conic-gradient(from 0deg, transparent 0%, rgba(0, 176, 240, 0.3) 40%, #0056b3 100%);
+  /* Más gordito: grosor de 10px */
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #fff 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #fff 0);
+  animation: spin-ring 1s linear infinite;
+  position: relative;
+  filter: drop-shadow(0 0 5px rgba(0, 176, 240, 0.5));
+}
+
+/* Cabeza redondeada de la serpiente */
+.cosapi-loader::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0056b3;
+  box-shadow: 0 0 5px rgba(0, 176, 240, 0.5);
+}
+
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
 }

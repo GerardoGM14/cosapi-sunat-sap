@@ -15,7 +15,6 @@ import { ProgramacionComponent } from './modules/dashboard/pages/programacion/pr
 import { SociedadesComponent } from './modules/dashboard/pages/sociedades/sociedades.component';
 import { UsuariosComponent } from './modules/dashboard/pages/usuarios/usuarios.component';
 import { ProveedoresComponent } from './modules/dashboard/pages/proveedores/proveedores.component';
-import { SapSunatComponent } from './modules/dashboard/pages/sap-sunat/sap-sunat.component';
 import { NavbarComponent } from './modules/dashboard/components/navbar/navbar.component';
 import { AppConfigService } from './services/app-config.service';
 import { NetworkInterceptor } from './interceptors/network.interceptor';
@@ -36,7 +35,6 @@ export function initializeApp(appConfig: AppConfigService) {
     SociedadesComponent,
     UsuariosComponent,
     ProveedoresComponent,
-    SapSunatComponent,
     NavbarComponent
   ],
   imports: [

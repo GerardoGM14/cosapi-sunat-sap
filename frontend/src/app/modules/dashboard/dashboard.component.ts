@@ -53,8 +53,13 @@ export class DashboardComponent implements OnInit {
     this.isMobileSidebarOpen = false;
   }
 
+  loggingOut = false;
+
   logout() {
-    localStorage.removeItem('token');
-    this.router.navigate(['/login']);
+    this.loggingOut = true;
+    setTimeout(() => {
+      localStorage.removeItem('token');
+      this.router.navigate(['/login']);
+    }, 2000);
   }
 }

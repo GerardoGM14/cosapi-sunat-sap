@@ -9,7 +9,6 @@ import { ProgramacionComponent } from './modules/dashboard/pages/programacion/pr
 import { SociedadesComponent } from './modules/dashboard/pages/sociedades/sociedades.component';
 import { UsuariosComponent } from './modules/dashboard/pages/usuarios/usuarios.component';
 import { ProveedoresComponent } from './modules/dashboard/pages/proveedores/proveedores.component';
-import { SapSunatComponent } from './modules/dashboard/pages/sap-sunat/sap-sunat.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -22,7 +21,6 @@ const routes: Routes = [
       { path: 'maestros/sociedades', component: SociedadesComponent },
       { path: 'maestros/usuarios', component: UsuariosComponent },
       { path: 'maestros/proveedores', component: ProveedoresComponent },
-      { path: 'sap-sunat', component: SapSunatComponent },
       { path: 'config', component: ConfigComponent },
       { path: '', redirectTo: 'ejecuciones', pathMatch: 'full' }
     ]
