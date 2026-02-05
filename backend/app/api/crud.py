@@ -423,10 +423,14 @@ def get_sociedad_ejecuciones(ruc: str, db: Session = Depends(get_db)):
         
     return ExecutionDashboardResponse(active=active_items, history=history_items)
 
+class ExecuteProgramacionRequest(BaseModel):
+    date: Optional[str] = None
+
 @router.post("/programacion/{id}/execute")
-async def execute_programacion_manual(id: int, ruc: Optional[str] = None, db: Session = Depends(get_db)):
+async def execute_programacion_manual(id: int, request: ExecuteProgramacionRequest = None, ruc: Optional[str] = None, db: Session = Depends(get_db)):
     user_id = 1 
-    execution_ids = await execute_programacion_logic(db, id, ruc, manual_user_id=user_id)
+    date_to_use = request.date if request and request.date else None
+    execution_ids = await execute_programacion_logic(db, id, ruc, manual_user_id=user_id, date_str=date_to_use)
     
     if not execution_ids:
         return {"message": "No se generaron ejecuciones (verifique datos/programación)", "execution_ids": []}

@@ -25,6 +25,7 @@ class GeneralConfig(BaseModel):
     sociedad: str
     fecha: str
     folder: str
+    hora: str | None = None
 
 class BotConfig(BaseModel):
     sunat: SunatConfig
@@ -129,6 +130,9 @@ async def run_bot_logic(config: BotConfig):
             "--password_sap", config.sap.password, 
             "--code_sociedad", config.general.sociedad
         ]
+
+        if config.general.hora:
+            args.extend(["--time", config.general.hora])
         
         socket_url = os.environ.get("SOCKET_URL")
         

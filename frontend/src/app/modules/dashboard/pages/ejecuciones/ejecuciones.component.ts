@@ -278,7 +278,9 @@ export class EjecucionesComponent implements OnInit {
         date: this.selectedParamsTask.selectedDateFormatted
       };
 
-      this.http.post(`${this.configService.apiUrl}/crud/sociedades/${this.selectedParamsTask.ruc}/execute`, payload)
+      // Use the programacion/{id}/execute endpoint instead of sociedades/{ruc}/execute
+      // This ensures we pick up the scheduled time from the configuration
+      this.http.post(`${this.configService.apiUrl}/crud/programacion/${this.selectedParamsTask.id}/execute?ruc=${this.selectedParamsTask.ruc}`, payload)
         .subscribe({
           next: (res: any) => {
             alert(`Ejecución iniciada correctamente para ${this.selectedParamsTask.nombre}.`);
@@ -433,6 +435,13 @@ export class EjecucionesComponent implements OnInit {
   isLogModalClosing = false;
   selectedLogTask: any = null;
   private logSubscription: Subscription | null = null;
+
+  downloadFiles(item: any): void {
+    console.log('Descargando archivos para ejecución:', item);
+    // TODO: Implement actual download logic via backend endpoint
+    // Example: this.http.get(..., { responseType: 'blob' })...
+    alert(`Iniciando descarga de archivos para: ${item.nombre}\n(Funcionalidad pendiente de backend)`);
+  }
 
   openLogModal(task: any, event?: Event): void {
     if (event) {
