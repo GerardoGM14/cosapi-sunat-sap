@@ -286,8 +286,8 @@
 </div>
 
 <!-- Execution Modal & Backdrop -->
-<div class="log-modal-backdrop" *ngIf="isExecutionModalOpen" (click)="closeExecutionModal()"></div>
-<div class="log-modal execution-modal" *ngIf="isExecutionModalOpen" [class.shifted-left]="isLogModalOpen && !isLogModalClosing">
+<div class="log-modal-backdrop" *ngIf="isExecutionModalOpen || isExecutionModalClosing" [class.closing]="isExecutionModalClosing" (click)="closeExecutionModal()"></div>
+<div class="log-modal execution-modal" *ngIf="isExecutionModalOpen || isExecutionModalClosing" [class.closing]="isExecutionModalClosing" [class.shifted-left]="isLogModalOpen && !isLogModalClosing">
   
   <!-- Header Custom -->
   <div class="drawer-header-custom" *ngIf="selectedExecution">

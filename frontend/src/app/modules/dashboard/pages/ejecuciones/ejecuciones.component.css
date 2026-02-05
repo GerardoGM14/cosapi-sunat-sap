@@ -1295,12 +1295,21 @@ td {
 }
 
 .log-modal.closing {
+    animation: scaleOut 0.2s ease-in forwards !important;
+  }
+  
+  .log-modal-backdrop.closing {
     animation: fadeOut 0.2s ease-in forwards !important;
   }
   
   @keyframes fadeOut {
     from { opacity: 1; }
     to { opacity: 0; }
+  }
+
+  @keyframes scaleOut {
+    from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    to { transform: translate(-50%, -48%) scale(0.96); opacity: 0; }
   }
 
   /* --- Base Styles for Execution Modal --- */

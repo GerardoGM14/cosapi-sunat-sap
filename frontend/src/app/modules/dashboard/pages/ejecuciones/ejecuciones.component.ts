@@ -319,6 +319,7 @@ export class EjecucionesComponent implements OnInit {
 
   // Execution Modal Logic
   isExecutionModalOpen = false;
+  isExecutionModalClosing = false;
   selectedExecution: any = null;
   
   // History Pagination & Controls
@@ -331,6 +332,7 @@ export class EjecucionesComponent implements OnInit {
   openExecutionModal(item: any): void {
     this.selectedExecution = item;
     this.isExecutionModalOpen = true;
+    this.isExecutionModalClosing = false;
     this.historyCurrentPage = 1; // Reset page
     
     // Set default date range to today for display (mock)
@@ -411,10 +413,19 @@ export class EjecucionesComponent implements OnInit {
   }
 
   closeExecutionModal(): void {
-    this.isExecutionModalOpen = false;
-    this.selectedExecution = null;
-    // Restore body scroll
-    document.body.style.overflow = 'auto';
+    if (this.isLogModalOpen) {
+        this.closeLogModal();
+    }
+    
+    this.isExecutionModalClosing = true;
+
+    setTimeout(() => {
+        this.isExecutionModalOpen = false;
+        this.isExecutionModalClosing = false;
+        this.selectedExecution = null;
+        // Restore body scroll
+        document.body.style.overflow = 'auto';
+    }, 200);
   }
 
   // Logs Modal Logic
