@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from app.database import SessionLocal, get_db
-from app.models import MSociedad, MUsuario, MSap, MSapSociedad, MProgramacion, MProgramacionSociedad, DEjecucion, MListaBlanca, MListaBlancaSociedad
+from app.models import MSociedad, MUsuario, MSap, MSapSociedad, MProgramacion, MProgramacionSociedad, DEjecucion, MListaBlanca, MListaBlancaSociedad, DSeguimiento
 from app.api.auth import get_password_hash
 from app.services.execution import execute_programacion_logic, execute_sociedad_logic
 from pydantic import BaseModel
@@ -373,6 +373,22 @@ class ExecutionActiveItem(BaseModel):
 class ExecutionDashboardResponse(BaseModel):
     active: List[ExecutionActiveItem]
     history: List[ExecutionHistoryItem]
+
+class LogItem(BaseModel):
+    date: str
+    message: str
+
+@router.get("/ejecuciones/{execution_id}/logs", response_model=List[LogItem])
+def get_execution_logs(execution_id: int, db: Session = Depends(get_db)):
+    logs = db.query(DSeguimiento).filter(DSeguimiento.iMEjecucion == execution_id).order_by(DSeguimiento.fRegistro.asc()).all()
+    
+    result = []
+    for log in logs:
+        result.append(LogItem(
+            date=log.fRegistro.strftime("%Y-%m-%d %H:%M:%S") if log.fRegistro else "",
+            message=log.tDescripcion or ""
+        ))
+    return result
 
 @router.get("/sociedades/{ruc}/ejecuciones", response_model=ExecutionDashboardResponse)
 def get_sociedad_ejecuciones(ruc: str, db: Session = Depends(get_db)):

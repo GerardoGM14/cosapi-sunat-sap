@@ -428,8 +428,25 @@ export class EjecucionesComponent implements OnInit {
       event.stopPropagation();
     }
     this.selectedLogTask = task;
+    this.selectedLogTask.logs = []; // Clear previous logs to avoid duplication
     this.isLogModalOpen = true;
     this.isLogModalClosing = false;
+
+    // Load logs from history if execution ID exists
+    if (this.selectedLogTask.iMEjecucion) {
+        this.http.get<any[]>(`${this.configService.apiUrl}/crud/ejecuciones/${this.selectedLogTask.iMEjecucion}/logs`).subscribe({
+            next: (logs) => {
+                const historyLogs = logs.map(log => ({
+                    fecha: log.date,
+                    configuracion: this.selectedLogTask.nombre,
+                    estado: log.message
+                }));
+                // Prepend history logs to any logs that might have arrived via socket
+                this.selectedLogTask.logs = [...historyLogs, ...this.selectedLogTask.logs];
+            },
+            error: (err) => console.error('Error fetching logs', err)
+        });
+    }
 
     // Subscribe to socket logs
     this.logSubscription = this.socketService.onLog().subscribe((logData: any) => {

@@ -7,6 +7,8 @@ import asyncio
 import threading
 from datetime import datetime
 from app.socket_manager import sio
+from app.database import SessionLocal
+from app.models import DSeguimiento
 
 router = APIRouter()
 
@@ -28,6 +30,7 @@ class BotConfig(BaseModel):
     sunat: SunatConfig
     sap: SapConfig
     general: GeneralConfig
+    execution_id: int | None = None
 
 @router.post("/run")
 async def run_bot_endpoint(config: BotConfig):
@@ -155,7 +158,7 @@ async def run_bot_logic(config: BotConfig):
         loop = asyncio.get_running_loop()
 
         # Stream output function with debug prints
-        def stream_output(proc, event_loop):
+        def stream_output(proc, event_loop, exec_id):
             import re
             ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             
@@ -189,6 +192,26 @@ async def run_bot_logic(config: BotConfig):
                                 clean_line = f"✅ {clean_line}"
 
                             print(f"🤖 [BOT] {clean_line}")
+                            
+                            # Save to Database if execution_id is present
+                            if exec_id:
+                                try:
+                                    db = SessionLocal()
+                                    try:
+                                        new_log = DSeguimiento(
+                                            iMEjecucion=exec_id,
+                                            tDescripcion=clean_line[:250], # Limit to 250 chars as per schema
+                                            fRegistro=datetime.now()
+                                        )
+                                        db.add(new_log)
+                                        db.commit()
+                                    except Exception as db_err:
+                                        print(f"⚠️ Error saving log to DB: {db_err}")
+                                    finally:
+                                        db.close()
+                                except Exception as e:
+                                    print(f"⚠️ Error creating DB session for logging: {e}")
+
                             asyncio.run_coroutine_threadsafe(
                                 sio.emit('log:bot', {
                                     'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -202,7 +225,7 @@ async def run_bot_logic(config: BotConfig):
                 print("🔴 Fin de captura de logs del bot")
                 proc.stdout.close()
 
-        t = threading.Thread(target=stream_output, args=(process, loop))
+        t = threading.Thread(target=stream_output, args=(process, loop, config.execution_id))
         t.daemon = True
         t.start()
         

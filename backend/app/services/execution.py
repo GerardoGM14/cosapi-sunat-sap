@@ -89,7 +89,8 @@ async def execute_sociedad_logic(db: Session, target_rucs: list[str], manual_use
                     sociedad=soc_code,
                     fecha=date_str,
                     folder=full_folder_path
-                )
+                ),
+                execution_id=new_exec.iMEjecucion
             )
             await run_bot_logic(config)
             
