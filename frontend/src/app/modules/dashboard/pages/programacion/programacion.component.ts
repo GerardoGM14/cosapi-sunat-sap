@@ -55,6 +55,7 @@ export class ProgramacionComponent implements OnInit {
 
   societySearchTerm: string = '';
   showSocietySearch: boolean = false;
+  selectedSocietiesCount: number = 0;
 
   // Time Picker Logic
   isTimePickerOpen: boolean = false;
@@ -62,6 +63,10 @@ export class ProgramacionComponent implements OnInit {
   minutes: string[] = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
   selectedHour: string = '00';
   selectedMinute: string = '00';
+
+  // Toast Logic
+  errorMessage: string = '';
+  successMessage: string = '';
 
   constructor(private http: HttpClient, private configService: AppConfigService) { }
 
@@ -170,9 +175,14 @@ export class ProgramacionComponent implements OnInit {
 
   toggleSociety(soc: Sociedad): void {
     soc.selected = !soc.selected;
+    this.updateSelectedCount();
     if (soc.selected) {
         this.loadSapAccounts(soc);
     }
+  }
+
+  updateSelectedCount(): void {
+    this.selectedSocietiesCount = this.sociedadesList.filter(s => s.selected).length;
   }
 
   loadSapAccounts(soc: Sociedad) {
@@ -199,6 +209,29 @@ export class ProgramacionComponent implements OnInit {
 
   preSaveProgramacion(): void {
     console.log('Pre-guardando programación...', this.newProgramacion);
+
+    // Validation
+    if (!this.newProgramacion.nombre.trim()) {
+      this.showError('Faltan completar campos: Nombre de la programación');
+      return;
+    }
+
+    if (!this.newProgramacion.hora) {
+      this.showError('Faltan completar campos: Hora de ejecución');
+      return;
+    }
+
+    const hasSelectedDays = this.newProgramacion.dias.some(d => d.selected);
+    if (!hasSelectedDays) {
+      this.showError('Faltan completar campos: Seleccione al menos un día');
+      return;
+    }
+
+    const hasSelectedSocieties = this.sociedadesList.some(s => s.selected);
+    if (!hasSelectedSocieties) {
+      this.showError('Faltan completar campos: Seleccione al menos una sociedad');
+      return;
+    }
     
     // Better mapping based on index
     const daysMap = ['Lun', 'Mar', 'Mier', 'Juev', 'Vier', 'Sab', 'Dom'];
@@ -274,6 +307,7 @@ export class ProgramacionComponent implements OnInit {
         s.selected = false;
         s.selectedSapAccount = undefined;
     });
+    this.selectedSocietiesCount = 0;
     this.selectedHour = '00';
     this.selectedMinute = '00';
   }
@@ -347,5 +381,24 @@ export class ProgramacionComponent implements OnInit {
                 item.estado = previousState; // Revert on error
             }
         });
+  }
+
+  showError(message: string) {
+    this.successMessage = '';
+    this.errorMessage = message;
+    this.triggerToastTimeout();
+  }
+
+  showSuccess(message: string) {
+    this.errorMessage = '';
+    this.successMessage = message;
+    this.triggerToastTimeout();
+  }
+
+  triggerToastTimeout() {
+    setTimeout(() => {
+      this.errorMessage = '';
+      this.successMessage = '';
+    }, 4000);
   }
 }

@@ -46,3 +46,13 @@ Directorio: `sunat-sap-service/`
 ## Credenciales (Desarrollo)
 Usuario: admin
 Contraseña: admin123
+
+
+# Servidor Linux 
+1. Busqueda de archivo de configuración Nginx:
+sudo nano /etc/nginx/sites-available/cosapi
+
+2. Configuración del servicio cosapi.backend:
+sudo nano /etc/systemd/system/cosapi-backend.service
+sudo systemctl daemon-reload
+sudo systemctl restart cosapi-backend

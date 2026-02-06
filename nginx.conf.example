@@ -1,0 +1,32 @@
+server {
+    listen 80;
+    server_name _;
+
+    # Frontend (Angular)
+    location / {
+        root /var/www/autosun-frontend; # Ajusta a tu ruta de despliegue
+        index index.html index.htm;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API & Socket.IO
+    # Importante: No poner barra al final de la URL del proxy para mantener el prefijo /api
+    location /api/ {
+        proxy_pass http://127.0.0.1:8001;
+        
+        # Headers necesarios para WebSockets (Socket.IO)
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Headers para que el backend reconozca la IP real del cliente
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Aumentar tiempo de espera para procesos largos
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
+    }
+}
