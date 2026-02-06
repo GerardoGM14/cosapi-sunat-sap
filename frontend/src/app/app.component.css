@@ -1,3 +1,18 @@
+/* --- Full Screen Blur Overlay --- */
+.fullscreen-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2); /* Transparent base */
+  backdrop-filter: blur(15px); /* Glassmorphism Blur */
+  -webkit-backdrop-filter: blur(15px);
+  z-index: 99999; /* Below toast (100000) */
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: all; /* Block interactions */
+}
+
 /* --- Toast Notification (Bottom Right) --- */
 .toast-notification {
   position: fixed;
