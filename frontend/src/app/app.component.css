@@ -1,36 +1,66 @@
-.app-loader-overlay {
+/* --- Full Screen Loader (Cosapi Glassmorphism) --- */
+.fullscreen-loader {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(255, 255, 255, 0.9);
-  z-index: 9999;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2); /* Transparent base */
+  backdrop-filter: blur(15px); /* Glassmorphism Blur */
+  -webkit-backdrop-filter: blur(15px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  z-index: 99999;
   transition: opacity 0.3s ease-in-out;
 }
 
-.loader-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3498db;
+.loader-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Cosapi Spinner Ring with Gradient */
+.cosapi-loader {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  /* Serpiente: Cola transparente a cabeza sólida */
+  background: conic-gradient(from 0deg, transparent 0%, rgba(0, 176, 240, 0.3) 40%, #0056b3 100%);
+  /* Más gordito: grosor de 10px */
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #fff 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #fff 0);
+  animation: spin-ring 1s linear infinite;
+  position: relative;
+  filter: drop-shadow(0 0 5px rgba(0, 176, 240, 0.5));
   margin-bottom: 20px;
+}
+
+/* Cabeza redondeada de la serpiente */
+.cosapi-loader::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0056b3;
+  box-shadow: 0 0 5px rgba(0, 176, 240, 0.5);
 }
 
 .loader-text {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-  font-size: 1.2rem;
+  color: #2c3e50;
+  font-size: 1.1rem;
   font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
 }

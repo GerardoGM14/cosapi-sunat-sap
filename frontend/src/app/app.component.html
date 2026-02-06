@@ -1,6 +1,8 @@
-<div *ngIf="!isConnected" class="app-loader-overlay">
-  <div class="loader-spinner"></div>
-  <div class="loader-text">Conectando con el servidor...</div>
+<div *ngIf="!isConnected" class="fullscreen-loader">
+  <div class="loader-content">
+    <div class="cosapi-loader"></div>
+    <div class="loader-text">Conectando con el servidor...</div>
+  </div>
 </div>
 
 <router-outlet></router-outlet>
