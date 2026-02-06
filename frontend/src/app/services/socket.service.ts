@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { AppConfigService } from './app-config.service';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SocketService {
   private socket: Socket | undefined;
+  private isConnectedSubject = new BehaviorSubject<boolean>(false);
+  public isConnected$ = this.isConnectedSubject.asObservable();
+  private connectionTimer: any;
 
   constructor(private configService: AppConfigService) {
     this.initSocket();
@@ -36,14 +39,35 @@ export class SocketService {
 
     this.socket.on('connect', () => {
       console.log('Socket connected:', this.socket?.id);
+      
+      // Clear any existing timer
+      if (this.connectionTimer) {
+        clearTimeout(this.connectionTimer);
+      }
+
+      // Wait 2 seconds before marking as stable
+      this.connectionTimer = setTimeout(() => {
+        if (this.socket?.connected) {
+          console.log('Socket connection stable');
+          this.isConnectedSubject.next(true);
+        }
+      }, 2000);
     });
 
     this.socket.on('disconnect', () => {
       console.log('Socket disconnected');
+      // Immediate feedback: connection lost
+      this.isConnectedSubject.next(false);
+      
+      if (this.connectionTimer) {
+        clearTimeout(this.connectionTimer);
+        this.connectionTimer = null;
+      }
     });
     
     this.socket.on('connect_error', (err) => {
         console.error('Socket connection error:', err);
+        this.isConnectedSubject.next(false);
     });
   }
 

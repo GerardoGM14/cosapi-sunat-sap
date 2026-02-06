@@ -1,19 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AppConfigService } from './services/app-config.service';
+import { SocketService } from './services/socket.service';
 
 @Component({
   selector: 'app-root',
-  template: '<router-outlet></router-outlet>',
-  styles: []
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
   title = 'autosun-frontend';
+  isConnected = false;
 
-  constructor(private http: HttpClient, private configService: AppConfigService) {}
+  constructor(
+    private http: HttpClient, 
+    private configService: AppConfigService,
+    private socketService: SocketService
+  ) {}
 
   ngOnInit() {
     this.checkSystemStatus();
+    
+    // Subscribe to socket connection status
+    this.socketService.isConnected$.subscribe(connected => {
+      this.isConnected = connected;
+    });
   }
 
   checkSystemStatus() {
