@@ -24,10 +24,14 @@ class ISap(BaseConfig):
     code_sociedad: str
     cred: CredSap
     date: DateSap
+    time: Optional[str]
+    days: Optional[str]
 
 class ISunat(BaseConfig):
     cred: CredSunat
     date: DateSunat
+    time: Optional[str]
+    days: Optional[str]
 
 class IArgs(TypedDict):
     sap: ISap

@@ -19,9 +19,9 @@ async def execute_programacion_logic(db: Session, programacion_id: int, ruc: str
         rels = db.query(MProgramacionSociedad).filter(MProgramacionSociedad.iMProgramacion == programacion_id).all()
         target_rucs = [r.tRuc for r in rels]
         
-    return await execute_sociedad_logic(db, target_rucs, manual_user_id, date_str, time_str=prog.tHora)
+    return await execute_sociedad_logic(db, target_rucs, manual_user_id, date_str, time_str=prog.tHora, days_str=prog.tDias)
 
-async def execute_sociedad_logic(db: Session, target_rucs: list[str], manual_user_id: int | None = None, date_str: str | None = None, time_str: str | None = None):
+async def execute_sociedad_logic(db: Session, target_rucs: list[str], manual_user_id: int | None = None, date_str: str | None = None, time_str: str | None = None, days_str: str | None = None):
     created_executions = []
 
     if not date_str:
@@ -89,7 +89,8 @@ async def execute_sociedad_logic(db: Session, target_rucs: list[str], manual_use
                     sociedad=soc_code,
                     fecha=date_str,
                     folder=full_folder_path,
-                    hora=time_str
+                    hora=time_str,
+                    dias=days_str
                 ),
                 execution_id=new_exec.iMEjecucion
             )

@@ -62,6 +62,22 @@ def get_args_console() -> IArgs:
         required=True,
         help="Contraseña para ingresar a la plataforma SAP"
     )
+    
+    parser.add_argument(
+        "--time",
+        type=str,
+        required=False,
+        default=None,
+        help="Hora de ejecución programada (formato HH:MM)"
+    )
+
+    parser.add_argument(
+        "--days",
+        type=str,
+        required=False,
+        default=None,
+        help="Días programados (ej: L,M,M,J,V,S,D)"
+    )
 
     default_socket_url = "http://localhost:8001"
     
@@ -97,10 +113,15 @@ def get_args_console() -> IArgs:
 
     folder_sunat = Path(folder) / 'sunat'
 
+    time_arg = parser.parse_args().time
+    days_arg = parser.parse_args().days
+
     return {
         'sap': {
             'code_sociedad': parser.parse_args().code_sociedad,
             'date': parser.parse_args().date,
+            'time': time_arg,
+            'days': days_arg,
             'folder': str(folder_sap),
             'cred': {
                 'email': parser.parse_args().correo_sap,
@@ -112,6 +133,8 @@ def get_args_console() -> IArgs:
                 'month': month,
                 'year': year
             },
+            'time': time_arg,
+            'days': days_arg,
             'folder': str(folder_sunat),
             'cred': {
                 'ruc': parser.parse_args().ruc_sunat,

@@ -26,6 +26,7 @@ class GeneralConfig(BaseModel):
     fecha: str
     folder: str
     hora: str | None = None
+    dias: str | None = None
 
 class BotConfig(BaseModel):
     sunat: SunatConfig
@@ -133,6 +134,9 @@ async def run_bot_logic(config: BotConfig):
 
         if config.general.hora:
             args.extend(["--time", config.general.hora])
+
+        if config.general.dias:
+            args.extend(["--days", config.general.dias])
         
         socket_url = os.environ.get("SOCKET_URL")
         
