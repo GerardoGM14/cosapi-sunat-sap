@@ -53,14 +53,82 @@
   box-shadow: 0 0 5px rgba(0, 176, 240, 0.5);
 }
 
-.loader-text {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #2c3e50;
-  font-size: 1.1rem;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
 }
 
-@keyframes spin-ring {
+/* --- Toast Notification (Bottom Right) --- */
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100000; /* Above loader */
+  min-width: 320px;
+  max-width: 420px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-left: 5px solid #3498db; /* Default/Info blue */
+  padding: 0;
+  overflow: hidden;
+  animation: slideInRight 0.4s ease-out;
+  display: flex;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-content {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  width: 100%;
+}
+
+.toast-icon {
+  margin-right: 12px;
+  color: #3498db;
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.toast-text {
+  flex: 1;
+}
+
+.toast-title {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.toast-message {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Mini spinner for toast */
+.mini-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(52, 152, 219, 0.3);
+  border-radius: 50%;
+  border-top-color: #3498db;
+  animation: spin-mini 1s linear infinite;
+}
+
+@keyframes spin-mini {
   to { transform: rotate(360deg); }
 }

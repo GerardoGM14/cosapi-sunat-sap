@@ -1,7 +1,18 @@
 <div *ngIf="!isConnected" class="fullscreen-loader">
   <div class="loader-content">
     <div class="cosapi-loader"></div>
-    <div class="loader-text">Conectando con el servidor...</div>
+  </div>
+</div>
+
+<div *ngIf="!isConnected" class="toast-notification">
+  <div class="toast-content">
+    <div class="toast-icon">
+      <div class="mini-spinner"></div>
+    </div>
+    <div class="toast-text">
+      <h4 class="toast-title">Conexión</h4>
+      <p class="toast-message">Conectando con el servidor...</p>
+    </div>
   </div>
 </div>
 
