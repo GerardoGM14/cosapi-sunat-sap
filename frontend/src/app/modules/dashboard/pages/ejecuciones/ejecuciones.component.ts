@@ -278,9 +278,8 @@ export class EjecucionesComponent implements OnInit {
         date: this.selectedParamsTask.selectedDateFormatted
       };
 
-      // Use the programacion/{id}/execute endpoint instead of sociedades/{ruc}/execute
-      // This ensures we pick up the scheduled time from the configuration
-      this.http.post(`${this.configService.apiUrl}/crud/programacion/${this.selectedParamsTask.id}/execute?ruc=${this.selectedParamsTask.ruc}`, payload)
+      // Use the sociedad execution endpoint instead of programacion
+      this.http.post(`${this.configService.apiUrl}/crud/sociedades/${this.selectedParamsTask.ruc}/execute`, payload)
         .subscribe({
           next: (res: any) => {
             alert(`Ejecución iniciada correctamente para ${this.selectedParamsTask.nombre}.`);
@@ -288,7 +287,8 @@ export class EjecucionesComponent implements OnInit {
           },
           error: (err) => {
             console.error('Error executing manually', err);
-            alert('Error al iniciar la ejecución. Verifique que la sociedad tenga cuenta SAP activa.');
+            const msg = err.error?.detail || err.error?.message || 'Error al iniciar la ejecución. Verifique que la sociedad tenga cuenta SAP activa.';
+            alert(msg);
           }
         });
   }
@@ -409,7 +409,8 @@ export class EjecucionesComponent implements OnInit {
         },
         error: (err) => {
             console.error('Error executing programacion', err);
-            alert('Error al iniciar la ejecución');
+            const msg = err.error?.detail || err.error?.message || 'Error al iniciar la ejecución';
+            alert(msg);
         }
     });
   }

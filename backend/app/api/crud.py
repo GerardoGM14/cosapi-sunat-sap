@@ -428,12 +428,17 @@ class ExecuteProgramacionRequest(BaseModel):
 
 @router.post("/programacion/{id}/execute")
 async def execute_programacion_manual(id: int, request: ExecuteProgramacionRequest = None, ruc: Optional[str] = None, db: Session = Depends(get_db)):
+    # Verify existence first
+    prog = db.query(MProgramacion).filter(MProgramacion.iMProgramacion == id).first()
+    if not prog:
+        raise HTTPException(status_code=404, detail=f"Programación {id} no encontrada")
+
     user_id = 1 
     date_to_use = request.date if request and request.date else None
     execution_ids = await execute_programacion_logic(db, id, ruc, manual_user_id=user_id, date_str=date_to_use)
     
     if not execution_ids:
-        return {"message": "No se generaron ejecuciones (verifique datos/programación)", "execution_ids": []}
+        raise HTTPException(status_code=400, detail="No se generaron ejecuciones (verifique datos/programación)")
 
     return {"message": "Ejecución iniciada", "execution_ids": execution_ids}
 
@@ -442,11 +447,16 @@ class ExecuteManualRequest(BaseModel):
 
 @router.post("/sociedades/{ruc}/execute")
 async def execute_sociedad_manual(ruc: str, request: ExecuteManualRequest, db: Session = Depends(get_db)):
+    # Verify society exists
+    sociedad = db.query(MSociedad).filter(MSociedad.tRuc == ruc).first()
+    if not sociedad:
+         raise HTTPException(status_code=404, detail=f"Sociedad {ruc} no encontrada")
+
     user_id = 1 # TODO:
     execution_ids = await execute_sociedad_logic(db, [ruc], manual_user_id=user_id, date_str=request.date)
     
     if not execution_ids:
-        return {"message": "No se generaron ejecuciones (verifique que la sociedad tenga cuenta SAP activa)", "execution_ids": []}
+        raise HTTPException(status_code=400, detail="No se generaron ejecuciones (verifique que la sociedad tenga cuenta SAP activa)")
 
     return {"message": "Ejecución iniciada", "execution_ids": execution_ids}
 
