@@ -13,6 +13,7 @@ interface Sociedad {
   sapAccounts: any[];
   selectedSapAccount?: any;
   loadingSap?: boolean;
+  estado: boolean;
 }
 
 @Component({
@@ -41,13 +42,13 @@ export class ProgramacionComponent implements OnInit {
     nombre: '',
     hora: '',
     dias: [
-      { label: 'L', selected: true },
+      { label: 'L', selected: false },
       { label: 'M', selected: false },
-      { label: 'M', selected: true },
-      { label: 'J', selected: true },
+      { label: 'M', selected: false },
+      { label: 'J', selected: false },
       { label: 'V', selected: false },
       { label: 'S', selected: false },
-      { label: 'D', selected: true }
+      { label: 'D', selected: false }
     ]
   };
 
@@ -107,7 +108,8 @@ export class ProgramacionComponent implements OnInit {
             selected: false,
             hasSunatCredentials: !!(s.tUsuario && s.tClave),
             sapAccounts: [],
-            loadingSap: false
+            loadingSap: false,
+            estado: s.lActivo
           }));
         },
         error: (err) => console.error('Error loading sociedades', err)
@@ -148,21 +150,8 @@ export class ProgramacionComponent implements OnInit {
   }
 
   openModal(): void {
+    this.resetForm();
     this.isModalOpen = true;
-    // Initialize time picker with current time or existing value
-    if (this.newProgramacion.hora) {
-      const parts = this.newProgramacion.hora.split(':');
-      if (parts.length === 2) {
-        this.selectedHour = parts[0];
-        this.selectedMinute = parts[1];
-      }
-    } else {
-      const now = new Date();
-      this.selectedHour = now.getHours().toString().padStart(2, '0');
-      const roundedMinutes = Math.floor(now.getMinutes() / 5) * 5;
-      this.selectedMinute = roundedMinutes.toString().padStart(2, '0');
-      this.updateTime();
-    }
   }
 
   closeModal(): void {
@@ -174,6 +163,7 @@ export class ProgramacionComponent implements OnInit {
   }
 
   toggleSociety(soc: Sociedad): void {
+    if (!soc.estado) return;
     soc.selected = !soc.selected;
     this.updateSelectedCount();
     if (soc.selected) {
@@ -293,13 +283,13 @@ export class ProgramacionComponent implements OnInit {
         nombre: '',
         hora: '',
         dias: [
-          { label: 'L', selected: true },
+          { label: 'L', selected: false },
           { label: 'M', selected: false },
-          { label: 'M', selected: true },
-          { label: 'J', selected: true },
+          { label: 'M', selected: false },
+          { label: 'J', selected: false },
           { label: 'V', selected: false },
           { label: 'S', selected: false },
-          { label: 'D', selected: true }
+          { label: 'D', selected: false }
         ]
     };
     // Reset societies selection

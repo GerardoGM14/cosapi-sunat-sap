@@ -294,7 +294,7 @@
         </div>
         
         <div class="societies-list">
-          <div class="society-item-wrapper" *ngFor="let soc of filteredSocieties" [class.selected]="soc.selected">
+          <div class="society-item-wrapper" *ngFor="let soc of filteredSocieties" [class.selected]="soc.selected" [class.disabled]="!soc.estado" [title]="!soc.estado ? 'Desactivado' : ''">
             <div class="society-item">
               <div class="checkbox-wrapper" (click)="toggleSociety(soc)">
                 <div class="custom-checkbox" [class.checked]="soc.selected">
@@ -307,7 +307,13 @@
               </div>
               <!-- SUNAT Status Check -->
               <div class="sunat-status" *ngIf="soc.hasSunatCredentials">
-                  <span class="badge-sunat">SUNAT ✅</span>
+                  <span class="badge-sunat">
+                    SUNAT 
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                  </span>
               </div>
             </div>
             

@@ -352,6 +352,18 @@ def delete_programacion(id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Programación eliminada exitosamente"}
 
+@router.put("/programacion/{id}/toggle")
+def toggle_programacion(id: int, db: Session = Depends(get_db)):
+    prog = db.query(MProgramacion).filter(MProgramacion.iMProgramacion == id).first()
+    if not prog:
+        raise HTTPException(status_code=404, detail="Programación no encontrada")
+    
+    prog.lActivo = not prog.lActivo
+    db.commit()
+    db.refresh(prog)
+    
+    return {"message": "Estado actualizado", "lActivo": prog.lActivo}
+
 # Execution Dashboard Endpoints
 
 class ExecutionHistoryItem(BaseModel):

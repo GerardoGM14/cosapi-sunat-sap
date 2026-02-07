@@ -145,6 +145,7 @@ export class EjecucionesComponent implements OnInit {
                 listaBlanca: 0, 
                 listaBlancaTotal: 0, 
                 estado: 'Ejecutar', 
+                isSocietyActive: item.lActivo,
                 activas: [],
                 historial: [],
                 // New Date Fields

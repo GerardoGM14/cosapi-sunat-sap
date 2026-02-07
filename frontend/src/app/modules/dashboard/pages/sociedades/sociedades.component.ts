@@ -154,7 +154,8 @@ export class SociedadesComponent implements OnInit {
     if (!this.newProgramacion.ruc || 
         !this.newProgramacion.razonSocial || 
         !this.newProgramacion.usuarioSunat || 
-        !this.newProgramacion.claveSol) {
+        !this.newProgramacion.claveSol ||
+        !this.newProgramacion.codigoSap) {
       this.showError('Todos los campos son obligatorios.');
       return false;
     }
@@ -162,6 +163,12 @@ export class SociedadesComponent implements OnInit {
     // Check RUC length
     if (this.newProgramacion.ruc.length !== 11) {
       this.showError('El RUC debe tener exactamente 11 dígitos.');
+      return false;
+    }
+
+    // Check SAP Code length
+    if (this.newProgramacion.codigoSap.length > 4) {
+      this.showError('El Código SAP no puede tener más de 4 caracteres.');
       return false;
     }
 

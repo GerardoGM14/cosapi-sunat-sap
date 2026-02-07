@@ -809,6 +809,28 @@ tbody tr:hover td {
   /* Ensure it wraps content nicely */
 }
 
+.society-item-wrapper.disabled {
+  background-color: #e9ecef;
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(100%);
+  user-select: none;
+}
+
+.society-item-wrapper.disabled * {
+  cursor: not-allowed;
+}
+
+.society-item-wrapper.disabled .society-name,
+.society-item-wrapper.disabled .society-id {
+  color: #6c757d;
+}
+
+.society-item-wrapper.disabled .custom-checkbox {
+  background-color: #ced4da;
+  border-color: #adb5bd;
+}
+
 .society-item-wrapper:last-child {
   border-bottom: none;
 }
@@ -829,6 +851,9 @@ tbody tr:hover td {
     border-radius: 4px;
     font-weight: 600;
     border: 1px solid #c8e6c9;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 /* SAP Selector Styles */

@@ -184,11 +184,15 @@
           </td>
           <td class="actions-cell-wrapper">
             <div class="actions-cell-content">
-              <button class="btn-status" [ngClass]="getStatusClass(item.estado)" (click)="openParamsModal(item)">
-                {{ item.estado }}
-                <span *ngIf="item.estado === 'Ejecutar'" class="status-icon">▶</span>
-                <span *ngIf="item.estado === 'Procesando'" class="status-icon spinner"></span>
-              </button>
+              <div [title]="!item.isSocietyActive ? 'Sociedad desactivada' : ''" style="display: inline-block;">
+                <button class="btn-status" [ngClass]="getStatusClass(item.estado)" 
+                        (click)="item.isSocietyActive ? openParamsModal(item) : null" 
+                        [disabled]="!item.isSocietyActive">
+                  {{ item.estado }}
+                  <span *ngIf="item.estado === 'Ejecutar'" class="status-icon">▶</span>
+                  <span *ngIf="item.estado === 'Procesando'" class="status-icon spinner"></span>
+                </button>
+              </div>
               
               <button class="btn-icon-sm" (click)="openExecutionModal(item)" title="Ver Historial">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
