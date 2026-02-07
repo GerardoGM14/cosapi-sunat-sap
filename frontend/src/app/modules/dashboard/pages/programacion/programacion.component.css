@@ -1013,7 +1013,7 @@ tbody tr:hover td {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 3000;
+  z-index: 3100;
   min-width: 320px;
   max-width: 420px;
   background-color: white;
@@ -1093,4 +1093,13 @@ tbody tr:hover td {
 
 .toast-close:hover {
   color: #4b5563;
+}
+
+/* Warning Toast Style */
+.toast-notification.warning {
+  border-left-color: #f59e0b;
+}
+
+.toast-notification.warning .toast-icon {
+  color: #f59e0b;
 }

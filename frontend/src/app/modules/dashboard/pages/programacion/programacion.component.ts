@@ -68,6 +68,7 @@ export class ProgramacionComponent implements OnInit {
   // Toast Logic
   errorMessage: string = '';
   successMessage: string = '';
+  warningMessage: string = '';
 
   constructor(private http: HttpClient, private configService: AppConfigService) { }
 
@@ -223,6 +224,21 @@ export class ProgramacionComponent implements OnInit {
       return;
     }
     
+    // Validate if selected time is in the past for today
+    const now = new Date();
+    // JS getDay(): 0=Sun, 1=Mon...6=Sat. Our array: 0=Mon...6=Sun.
+    const currentDayIndex = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    
+    if (this.newProgramacion.dias[currentDayIndex].selected) {
+      const [selectedH, selectedM] = this.newProgramacion.hora.split(':').map(Number);
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+      
+      if (selectedH < currentH || (selectedH === currentH && selectedM < currentM)) {
+        this.showWarning('Estás en un horario adelantado, se ejecutará la siguiente semana');
+      }
+    }
+
     // Better mapping based on index
     const daysMap = ['Lun', 'Mar', 'Mier', 'Juev', 'Vier', 'Sab', 'Dom'];
     const activeDays = this.newProgramacion.dias
@@ -375,13 +391,22 @@ export class ProgramacionComponent implements OnInit {
 
   showError(message: string) {
     this.successMessage = '';
+    this.warningMessage = '';
     this.errorMessage = message;
     this.triggerToastTimeout();
   }
 
   showSuccess(message: string) {
     this.errorMessage = '';
+    this.warningMessage = '';
     this.successMessage = message;
+    this.triggerToastTimeout();
+  }
+
+  showWarning(message: string) {
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.warningMessage = message;
     this.triggerToastTimeout();
   }
 
@@ -389,6 +414,7 @@ export class ProgramacionComponent implements OnInit {
     setTimeout(() => {
       this.errorMessage = '';
       this.successMessage = '';
+      this.warningMessage = '';
     }, 4000);
   }
 }
