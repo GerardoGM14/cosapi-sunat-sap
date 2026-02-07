@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, merge, fromEvent, of, Observable } from 'rxjs';
-import { mapTo, map, catchError } from 'rxjs/operators';
+import { BehaviorSubject, merge, fromEvent } from 'rxjs';
+import { mapTo } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +9,7 @@ export class NetworkStatusService {
   private onlineStatus$ = new BehaviorSubject<boolean>(navigator.onLine);
   public isOnline$ = this.onlineStatus$.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor() {
     this.initNetworkListeners();
   }
 
@@ -28,15 +27,24 @@ export class NetworkStatusService {
   }
 
   public verifyInternetConnection(): void {
+    // Usamos 'Image' para hacer un ping simple que no sea bloqueado por CORS
+    // Google favicon es fiable, pero HttpClient (XHR) es bloqueado por CORS.
+    // La carga de imágenes permite verificar si hay acceso a internet sin leer el contenido.
     const url = 'https://www.google.com/favicon.ico';
-    this.http.head(url + '?t=' + new Date().getTime(), { responseType: 'text' })
-      .pipe(
-        map(() => true),
-        catchError(() => of(false))
-      )
-      .subscribe(hasInternet => {
-        this.updateOnlineStatus(hasInternet);
-      });
+    const img = new Image();
+    
+    img.onload = () => {
+      this.updateOnlineStatus(true);
+    };
+
+    img.onerror = () => {
+      // Si falla la carga de la imagen (y no es por 404, que google no suele dar para favicon), asumimos sin conexión
+      // Nota: Si google está bloqueado pero hay internet, esto dará falso, lo cual es aceptable para "acceso a internet global"
+      this.updateOnlineStatus(false);
+    };
+
+    // Agregamos timestamp para evitar caché
+    img.src = url + '?t=' + new Date().getTime();
   }
 
   public updateOnlineStatus(isOnline: boolean): void {

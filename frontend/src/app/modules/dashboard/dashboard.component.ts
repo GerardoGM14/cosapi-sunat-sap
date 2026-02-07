@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,7 +15,7 @@ export class DashboardComponent implements OnInit {
   avatarUrl = '';
   pageTitle = 'Ejecuciones';
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private authService: AuthService) {
     this.username = localStorage.getItem('username') || 'Usuario Invitado';
     // Simular email basado en usuario si no es un email real
     this.userEmail = this.username.includes('@') ? this.username : `${this.username.toLowerCase().replace(/\s+/g, '.')}@cosapi.com`;
@@ -58,8 +59,7 @@ export class DashboardComponent implements OnInit {
   logout() {
     this.loggingOut = true;
     setTimeout(() => {
-      localStorage.removeItem('token');
-      this.router.navigate(['/login']);
+      this.authService.logout();
     }, 2000);
   }
 }

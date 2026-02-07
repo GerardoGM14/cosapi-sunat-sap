@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AppConfigService } from './services/app-config.service';
 import { SocketService } from './services/socket.service';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -11,11 +12,13 @@ import { SocketService } from './services/socket.service';
 export class AppComponent implements OnInit {
   title = 'autosun-frontend';
   isConnected = false;
+  isSessionExpired = false;
 
   constructor(
     private http: HttpClient, 
     private configService: AppConfigService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -25,6 +28,15 @@ export class AppComponent implements OnInit {
     this.socketService.isConnected$.subscribe(connected => {
       this.isConnected = connected;
     });
+
+    // Subscribe to session expiration
+    this.authService.sessionExpired$.subscribe(expired => {
+      this.isSessionExpired = expired;
+    });
+  }
+
+  handleLoginRedirect() {
+    this.authService.closeExpiredModal();
   }
 
   checkSystemStatus() {

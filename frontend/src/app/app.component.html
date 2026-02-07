@@ -12,4 +12,20 @@
   </div>
 </div>
 
+<!-- Modal de Sesión Expirada -->
+<div *ngIf="isSessionExpired" class="session-modal-overlay">
+  <div class="session-modal-container">
+    <div class="session-modal-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+    </div>
+    <h3 class="session-modal-title">Sesión Cerrada</h3>
+    <p class="session-modal-message">
+      Su sesión ha sido cerrada en otra pestaña o ventana. Por favor, inicie sesión nuevamente para continuar.
+    </p>
+    <button (click)="handleLoginRedirect()" class="session-modal-button">
+      Ir al Login
+    </button>
+  </div>
+</div>
+
 <router-outlet></router-outlet>
