@@ -137,7 +137,7 @@ async def appSunat(args: ISunat) -> IReturn:
                     data={'message': obtener_datos['message'], 'date': dateCurrent()}
                 )
                 
-                input("Presiona Enter para continuar...")
+                ##input("Presiona Enter para continuar...")
                 procesar_pendientes = await bot.procesar_pendientes(frame=entrar_al_menu_validaciones['frame'])
 
                 if not procesar_pendientes['success']:
