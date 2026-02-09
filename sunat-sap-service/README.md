@@ -15,10 +15,10 @@ Para cambiar el método, se puede establecer la variable de entorno `CONFIG_METH
 
 Este es el método recomendado, especialmente para entornos de producción, ya que evita exponer datos sensibles en la línea de comandos.
 
-### Pasos:
+### Pasos
 
-1.  Crea un archivo llamado `.env` en la raíz del proyecto (`d:\\cosapi\\.env`).
-2.  Añade las siguientes variables al archivo con sus respectivos valores:
+1. Crea un archivo llamado `.env` en la raíz del proyecto (`d:\\cosapi\\.env`).
+2. Añade las siguientes variables al archivo con sus respectivos valores:
 
     ```env
     FOLDER="d:\\cosapi\\output"
@@ -31,13 +31,13 @@ Este es el método recomendado, especialmente para entornos de producción, ya q
     PASSWORD_SAP="sappass"
     ```
 
-3.  El script leerá automáticamente estas variables al ejecutarse.
+3. El script leerá automáticamente estas variables al ejecutarse.
 
 ## 2. Uso a través de la Línea de Comandos
 
 Este método es útil para pruebas rápidas o desarrollo. Los argumentos se pasan directamente al ejecutar el script.
 
-### Ejemplo de uso:
+### Ejemplo de uso
 
 ```bash
 python main.py --folder "d:\\cosapi\\output" --code_sociedad "PE01" --date "17/01/2026" --ruc_sunat "12345678901" --user_sunat "testuser" --password_sunat "testpass" --correo_sap "test@sap.com" --password_sap "sappass"

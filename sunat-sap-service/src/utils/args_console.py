@@ -140,7 +140,8 @@ def get_args_console() -> IArgs:
                 'ruc': parser.parse_args().ruc_sunat,
                 'user': parser.parse_args().user_sunat,
                 'clave': parser.parse_args().password_sunat
-            }
+            },
+            'input_date': parser.parse_args().date
         },
         'socket_url': parser.parse_args().socket_url
     }

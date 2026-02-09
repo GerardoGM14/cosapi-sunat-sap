@@ -39,7 +39,8 @@ def get_args_env() -> IArgs:
                 'ruc': ConfigEnv.RUC_SUNAT,
                 'user': ConfigEnv.USER_SUNAT,
                 'clave': ConfigEnv.PASSWORD_SUNAT
-            }
+            },
+            'input_date': date_str
         },
         'socket_url': ConfigEnv.SOCKET_URL
     }

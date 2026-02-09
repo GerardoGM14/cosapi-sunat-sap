@@ -32,6 +32,7 @@ class ISunat(BaseConfig):
     date: DateSunat
     time: Optional[str]
     days: Optional[str]
+    input_date: Optional[str] = None
 
 class IArgs(TypedDict):
     sap: ISap

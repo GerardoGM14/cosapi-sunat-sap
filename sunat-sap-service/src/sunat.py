@@ -7,6 +7,7 @@ from src.bot_manager import BotSunat
 from src.schemas.IReturn import IReturn
 from src.socket_client.manager import socket_manager as io
 from src.schemas.ISocket import EmitEvent
+from src.libs.filtrar_excel_por_fecha import filtrar_excel_por_fecha
 
 logger = ColoredLogger()
 
@@ -136,6 +137,7 @@ async def appSunat(args: ISunat) -> IReturn:
                     data={'message': obtener_datos['message'], 'date': dateCurrent()}
                 )
                 
+                input("Presiona Enter para continuar...")
                 procesar_pendientes = await bot.procesar_pendientes(frame=entrar_al_menu_validaciones['frame'])
 
                 if not procesar_pendientes['success']:
@@ -155,6 +157,14 @@ async def appSunat(args: ISunat) -> IReturn:
                     data={'message': procesar_pendientes['message'], 'date': dateCurrent()}
                 )
                 
+                try:
+                    filtrar_excel_por_fecha(
+                        path_excel=obtener_datos['file_path_sunat'],
+                        fecha_objetivo=args['input_date']
+                    )
+                except:
+                    pass
+
                 return {
                     'success': True,
                     'error_system': False,
