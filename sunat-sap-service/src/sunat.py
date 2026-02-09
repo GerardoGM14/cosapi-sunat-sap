@@ -137,7 +137,6 @@ async def appSunat(args: ISunat) -> IReturn:
                     data={'message': obtener_datos['message'], 'date': dateCurrent()}
                 )
                 
-                ##input("Presiona Enter para continuar...")
                 procesar_pendientes = await bot.procesar_pendientes(frame=entrar_al_menu_validaciones['frame'])
 
                 if not procesar_pendientes['success']:
@@ -159,7 +158,7 @@ async def appSunat(args: ISunat) -> IReturn:
                 
                 try:
                     filtrar_excel_por_fecha(
-                        path_excel=obtener_datos['file_path_sunat'],
+                        path_excel=procesar_pendientes['file_path_sunat'],
                         fecha_objetivo=args['input_date']
                     )
                 except:
