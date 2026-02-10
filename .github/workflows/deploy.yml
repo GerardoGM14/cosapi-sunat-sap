@@ -9,5 +9,24 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
+      - name: Inject Secrets to .env
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          TARGET_DIR: "/opt/apps/cosapi-sunat-sap/backend"
+        run: |
+          # Ir al directorio del backend (asegurando que exista el archivo .env)
+          cd $TARGET_DIR || exit 1
+          touch .env
+          
+          # Actualizar GOOGLE_API_KEY (borrar anterior si existe y agregar nueva)
+          sed -i '/^GOOGLE_API_KEY=/d' .env
+          echo "GOOGLE_API_KEY=$GOOGLE_API_KEY" >> .env
+          
+          # Actualizar modelo Gemini
+          sed -i '/^GEMINI_MODEL=/d' .env
+          echo "GEMINI_MODEL=gemini-1.5-flash" >> .env
+          
+          echo "✅ Secretos inyectados correctamente en .env"
+
       - name: Deploy local
         run: bash /opt/apps/cosapi-sunat-sap/deploy.sh

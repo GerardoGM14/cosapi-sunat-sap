@@ -12,3 +12,4 @@ requests
 python-dotenv
 sqlalchemy
 python-socketio
+google-generativeai

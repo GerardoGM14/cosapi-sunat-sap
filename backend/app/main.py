@@ -2,7 +2,7 @@ import socketio
 from app.socket_manager import sio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, utils, bot, crud
+from app.api import auth, utils, bot, crud, ocr
 from app.database import engine, Base, SessionLocal
 from app import models 
 from app.models import MRol
@@ -42,6 +42,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(utils.router, prefix="/api/utils", tags=["Utils"])
 app.include_router(bot.router, prefix="/api/bot", tags=["Bot"])
 app.include_router(crud.router, prefix="/api/crud", tags=["CRUD"])
+app.include_router(ocr.router, prefix="/api/ocr", tags=["OCR"])
 
 @app.get("/")
 def read_root():
