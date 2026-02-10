@@ -34,7 +34,7 @@ class SociedadResponse(SociedadBase):
     fRegistro: datetime | None = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UsuarioBase(BaseModel):
     tNombre: str
@@ -62,7 +62,7 @@ class UsuarioResponse(UsuarioBase):
     fRegistro: datetime | None = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class SapBase(BaseModel):
     tUsuario: str
@@ -77,7 +77,7 @@ class SapResponse(SapBase):
     fRegistro: datetime | None = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 @router.get("/sap-accounts", response_model=List[SapResponse])
 def get_all_sap_accounts(db: Session = Depends(get_db)):
@@ -300,7 +300,7 @@ class ProgramacionResponse(BaseModel):
     lActivo: bool
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 def map_programacion_response(p: MProgramacion):
     return ProgramacionResponse(
@@ -485,7 +485,7 @@ class ListaBlancaResponse(ListaBlancaBase):
     sociedades_nombres: List[str] = []
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 @router.get("/proveedores", response_model=List[ListaBlancaResponse])
 def get_proveedores(db: Session = Depends(get_db)):

@@ -24,7 +24,7 @@ jobs:
           
           # Actualizar modelo Gemini
           sed -i '/^GEMINI_MODEL=/d' .env
-          echo "GEMINI_MODEL=gemini-1.5-flash" >> .env
+          echo "GEMINI_MODEL=gemini-2.5-flash-lite" >> .env
           
           echo "✅ Secretos inyectados correctamente en .env"
 
