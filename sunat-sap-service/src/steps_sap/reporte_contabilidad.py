@@ -9,10 +9,8 @@ async def reporte_contabilidad(page: Page) -> IReturn:
     try:
         await page.wait_for_load_state("networkidle", timeout=30000)
 
-        encuestas_locator = page.locator('#__item1-anchorNavigationBar-1')
-        await encuestas_locator.wait_for(state="visible", timeout=15000)
-        await encuestas_locator.highlight()
-        await encuestas_locator.click()
+        page_init = page.locator('//div[@id="shell-header-hdr-begin"]')
+        await page_init.wait_for(state="visible", timeout=15000)
 
         await page.wait_for_timeout(3000)
 

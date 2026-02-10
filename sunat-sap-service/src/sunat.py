@@ -8,6 +8,7 @@ from src.schemas.IReturn import IReturn
 from src.socket_client.manager import socket_manager as io
 from src.schemas.ISocket import EmitEvent
 from src.libs.filtrar_excel_por_fecha import filtrar_excel_por_fecha
+from src.config.config import Config
 
 logger = ColoredLogger()
 
@@ -29,7 +30,7 @@ async def appSunat(args: ISunat) -> IReturn:
                 page.on("pageerror", lambda err: logger.log(f"🔥 [PAGE ERROR] {err}", color=Colors.RED))
                 # -----------------------------------------
                 
-                await page.goto('https://e-menu.sunat.gob.pe/cl-ti-itmenu/MenuInternet.htm')
+                await page.goto(Config.URL_SUNAT)
                 
                 bot = BotSunat(
                     page=page,

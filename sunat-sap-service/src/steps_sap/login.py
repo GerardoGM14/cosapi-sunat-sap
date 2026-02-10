@@ -7,17 +7,17 @@ logger = ColoredLogger(disableModule=True)
 
 async def login_sap(page: Page, username: str, password: str) -> IReturn:
     try:
-        await page.click('text=artjpgqql.accounts.ondemand.com')
-        await page.wait_for_load_state("networkidle")
+        # await page.click('text=artjpgqql.accounts.ondemand.com')
+        # await page.wait_for_load_state("networkidle")
 
-        username_input = page.locator('#j_username')
+        username_input = page.locator('//div[@role="presentation"]//div[@class="fn-input"]')
         await username_input.wait_for(state="visible", timeout=10000)
         await username_input.highlight()
         await username_input.click()
         await username_input.press_sequentially(username, delay=30)
 
-        await page.wait_for_load_state("networkidle")
-        password_input = page.locator('#j_password')
+        # await page.wait_for_load_state("networkidle")
+        password_input = page.locator('//input[@id="j_password"]')
         await password_input.wait_for(state="visible", timeout=10000)
         await password_input.highlight()
         await password_input.click()

@@ -7,6 +7,8 @@ from src.schemas.IConfig import ISap
 from src.bot_manager import BotSap
 from src.socket_client.manager import socket_manager as io
 from src.schemas.ISocket import EmitEvent
+from src.config.config import Config
+
 
 logger = ColoredLogger()
 
@@ -30,10 +32,22 @@ async def appSap(args: ISap) -> IReturn:
 
                 await page.set_viewport_size({"width": 1600, "height": 1000})
                 
-                await page.goto("https://dev-f074wlvi.launchpad.cfapps.us10.hana.ondemand.com/site/portalProveedores#Shell-home")
+                await page.goto(Config.URL_SAP)
+
+                async with page.context.expect_page() as new_page_info:
+
+                    btn_start = page.locator('//button[@id="__button0"]')
+                    await btn_start.wait_for(state="visible", timeout=15000)
+                    await btn_start.highlight()
+                    await btn_start.click()
+                
+                # Obtenemos la referencia a la nueva página
+                new_page = await new_page_info.value
+                await new_page.wait_for_load_state()
+                logger.log("Nueva pestaña de login capturada con éxito.", color=Colors.GREEN)
 
                 bot = BotSap(
-                    page=page,
+                    page=new_page,
                     usernameSap=args['cred']['email'],
                     passwordSap=args['cred']['password'],
                     fecha=args['date'],
@@ -42,6 +56,7 @@ async def appSap(args: ISap) -> IReturn:
                 )
 
                 login = await bot.login_sap()
+                
                 if not login['success']:
                     if login['error_system']:
                         io.emit(
@@ -58,8 +73,9 @@ async def appSap(args: ISap) -> IReturn:
                     event=EmitEvent.SAP,
                     data={'message': login['message'], 'date': dateCurrent()}
                 )
-
+                
                 report = await bot.reporte_contabilidad()
+                
                 if not report['success']:
                     if report['error_system']:
                         io.emit(
