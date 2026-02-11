@@ -3,7 +3,7 @@ import io
 import json
 import asyncio
 import httpx
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -99,6 +99,94 @@ async def send_log_background(
                 print(f"⚠️ Error registrando consumo en API externa: {response.status_code} - {response.text}")
     except Exception as e:
         print(f"⚠️ Excepción al enviar log a API externa: {str(e)}")
+
+async def analyze_first_page_oc(file_path: str) -> dict:
+    """
+    Analiza solo la primera página del PDF para encontrar el O/C.
+    Guarda temporalmente la primera página en memoria y la envía a Gemini.
+    """
+    try:
+        # 1. Extraer primera página
+        reader = PdfReader(file_path)
+        if len(reader.pages) < 1:
+            return {"error": "El PDF está vacío"}
+            
+        writer = PdfWriter()
+        writer.add_page(reader.pages[0])
+        
+        first_page_stream = io.BytesIO()
+        writer.write(first_page_stream)
+        first_page_content = first_page_stream.getvalue()
+        
+        # 2. Preparar cliente Gemini
+        client = genai.Client(api_key=API_KEY)
+        
+        prompt = """
+        Analiza esta imagen/documento (que es la primera página de un archivo).
+        Tu ÚNICA tarea es encontrar el número de Orden de Compra, que suele aparecer como:
+        - "O/C"
+        - "O/C CLIENTE"
+        - "Orden de Compra"
+        - "Purchase Order"
+        - "PO"
+        
+        Devuelve la respuesta ESTRICTAMENTE en formato JSON:
+        {
+            "O/C": "valor_encontrado"
+        }
+        
+        Si no encuentras ningún código con ese formato, devuelve:
+        {
+            "O/C": null
+        }
+        NO añadas bloques de código markdown (```json), solo el texto JSON puro.
+        """
+               
+        response = client.models.generate_content(
+            model=MODEL_NAME or "gemini-2.0-flash", # Fallback si no hay modelo en env
+            contents=[
+                types.Content(
+                    parts=[
+                        types.Part.from_bytes(data=first_page_content, mime_type="application/pdf"),
+                        types.Part.from_text(text=prompt)
+                    ]
+                )
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
+        )
+        
+        # 4. Procesar respuesta
+        if response.text:
+            try:
+                result_json = json.loads(response.text)
+            except json.JSONDecodeError:
+                # Intento de limpieza si gemini manda markdown
+                clean_text = response.text.replace("```json", "").replace("```", "").strip()
+                result_json = json.loads(clean_text)
+                
+            # Calcular tokens para el log (estimado o real si la respuesta lo trae)
+            usage = response.usage_metadata
+            tokens_in = usage.prompt_token_count if usage else 0
+            tokens_out = usage.candidates_token_count if usage else 0
+            
+            # Enviar log en background
+            asyncio.create_task(send_log_background(
+                tokens_in=tokens_in,
+                tokens_out=tokens_out,
+                pages=len(reader.pages), # Total páginas del doc original
+                is_image=False,
+                model_used=MODEL_NAME or "gemini-fallback"
+            ))
+            
+            return result_json
+        
+        return {"O/C": None, "error": "No response text"}
+
+    except Exception as e:
+        print(f"Error en analyze_first_page_oc: {e}")
+        return {"error": str(e)}
 
 async def analyze_document_content(file_content: bytes, mime_type: str, prompt: str = None) -> dict:
     """
