@@ -100,6 +100,110 @@ async def send_log_background(
     except Exception as e:
         print(f"⚠️ Excepción al enviar log a API externa: {str(e)}")
 
+def clean_oc_value(value: str) -> str:
+    """
+    Limpia el valor de O/C según las reglas de negocio:
+    1. Si empieza con '4', se mantiene (hasta 10 dígitos).
+    2. Si no empieza con '4', toma los últimos 10 dígitos (contando de derecha a izquierda).
+    """
+    if not value:
+        return None
+        
+    # Eliminar caracteres no numéricos para trabajar solo con dígitos
+    digits = "".join(filter(str.isdigit, str(value)))
+    
+    if not digits:
+        return None
+
+    # Caso 1: Empieza con 4
+    if digits.startswith("4"):
+        return digits[:10]
+    
+    # Caso 2: No empieza con 4 -> Tomar los últimos 10 dígitos
+    # Ejemplo: 9994501234567 -> 4501234567
+    # Ejemplo: 123 -> 123 (si es menor a 10, toma todo)
+    if len(digits) > 10:
+        return digits[-10:]
+    else:
+        return digits
+
+def classify_document(oc_value: str) -> dict:
+    """
+    Clasifica el documento según el rango numérico del O/C.
+    Retorna un diccionario con 'clase_documento' y 'denominacion'.
+    Maneja superposiciones de rangos concatenando las opciones con ' / '.
+    """
+    if not oc_value or not oc_value.isdigit():
+        return {"clase_documento": None, "denominacion": None}
+    
+    try:
+        oc_num = int(oc_value)
+    except ValueError:
+        return {"clase_documento": None, "denominacion": None}
+
+    clases = []
+    denominaciones = []
+
+    # ZBNS: 4000000000 - 4099999999
+    if 4000000000 <= oc_num <= 4099999999:
+        clases.append("ZBNS")
+        denominaciones.append("OC Nacional c/Solic.")
+
+    # ZBNC: 4000000000 - 4099999999
+    if 4000000000 <= oc_num <= 4099999999:
+        clases.append("ZBNC")
+        denominaciones.append("OC Nacional c/Contr.")
+
+    # ZIMP: 4100000000 - 4199999999
+    if 4100000000 <= oc_num <= 4199999999:
+        clases.append("ZIMP")
+        denominaciones.append("OC Import. c/Solic.")
+        
+    # ZSUB: 4200000000 - 4299999999
+    if 4200000000 <= oc_num <= 4299999999:
+        clases.append("ZSUB")
+        denominaciones.append("OC Subcont. c/Solic.")
+        
+    # ZSES: 4300000000 - 4499999999
+    if 4300000000 <= oc_num <= 4499999999:
+        clases.append("ZSES")
+        denominaciones.append("OC Servicios c/Solic.")
+
+    # ZSEC: 4300000000 - 4499999999
+    if 4300000000 <= oc_num <= 4499999999:
+        clases.append("ZSEC")
+        denominaciones.append("OC Servicios c/Cont.")
+        
+    # ZTM1: 4400000000 - 4499999999
+    if 4400000000 <= oc_num <= 4499999999:
+        clases.append("ZTM1")
+        denominaciones.append("OC Serv. Transp.")
+        
+    # ZCON: 4500000000 - 4599999999
+    if 4500000000 <= oc_num <= 4599999999:
+        clases.append("ZCON")
+        denominaciones.append("Ord. Consignación")
+        
+    # ZAFL: 4600000000 - 4699999999
+    if 4600000000 <= oc_num <= 4699999999:
+        clases.append("ZAFL")
+        denominaciones.append("OC Afijo Nac. c/Solic.")
+
+    # ZAFI: 4600000000 - 4699999999
+    if 4600000000 <= oc_num <= 4699999999:
+        clases.append("ZAFI")
+        denominaciones.append("OC Afijo Import. c/Solic.")
+        
+    if not clases:
+        return {"clase_documento": "DESCONOCIDO", "denominacion": "Rango no clasificado"}
+
+    # Eliminar duplicados si fuera necesario, aunque aquí los ifs son explícitos
+    # Formatear salida
+    return {
+        "clase_documento": " / ".join(clases),
+        "denominacion": " / ".join(denominaciones)
+    }
+
 async def analyze_first_page_oc(file_path: str) -> dict:
     """
     Analiza solo la primera página del PDF para encontrar el O/C.
@@ -165,6 +269,20 @@ async def analyze_first_page_oc(file_path: str) -> dict:
                 # Intento de limpieza si gemini manda markdown
                 clean_text = response.text.replace("```json", "").replace("```", "").strip()
                 result_json = json.loads(clean_text)
+            
+            # Aplicar limpieza de O/C
+            if result_json.get("O/C"):
+                raw_oc = result_json["O/C"]
+                cleaned_oc = clean_oc_value(raw_oc)
+                result_json["O/C"] = cleaned_oc
+                result_json["O/C_Original"] = raw_oc # Guardamos el original para debug
+                
+                # Clasificar documento basado en O/C limpio
+                classification = classify_document(cleaned_oc)
+                result_json.update(classification)
+            else:
+                result_json["clase_documento"] = None
+                result_json["denominacion"] = None
                 
             # Calcular tokens para el log (estimado o real si la respuesta lo trae)
             usage = response.usage_metadata
@@ -205,12 +323,6 @@ async def analyze_document_content(file_content: bytes, mime_type: str, prompt: 
         if not prompt:
             prompt = "Analiza este documento y extrae toda la información relevante en texto plano."
 
-        # Preparar contenido. 
-        # El nuevo SDK acepta bytes directamente en types.Part.from_bytes
-        # o una lista mixta en contents.
-        
-        # Llamada asíncrona a Gemini
-        # Usamos client.aio para métodos asíncronos
         response = await client.aio.models.generate_content(
             model=MODEL_NAME,
             contents=[
@@ -218,16 +330,14 @@ async def analyze_document_content(file_content: bytes, mime_type: str, prompt: 
                 prompt
             ]
         )
-        
-        # Cálculo de métricas para el log
+
         usage = response.usage_metadata
         t_in = usage.prompt_token_count if usage else 0
         t_out = usage.candidates_token_count if usage else 0
         
         is_pdf = "pdf" in mime_type.lower()
         pages = count_pdf_pages(file_content) if is_pdf else 1
-        
-        # Enviar log en background (Fire and forget)
+
         asyncio.create_task(send_log_background(
             tokens_in=t_in,
             tokens_out=t_out,

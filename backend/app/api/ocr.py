@@ -1,15 +1,133 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Body
 from app.services.gemini_ocr import analyze_document_content, analyze_first_page_oc
-from typing import Optional
+from typing import Optional, List
 import shutil
 import os
 import uuid
+import asyncio
+from pydantic import BaseModel
+from app.socket_manager import sio, EmitEvent
 
 router = APIRouter()
 
 # Directorio temporal para PDFs
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 PDF_DIR = os.path.join(BASE_DIR, "app", "pdf")
+
+class BatchProcessRequest(BaseModel):
+    folders: List[str] # Lista de rutas de carpetas a procesar
+    concurrency: int = 5 # Nivel de concurrencia (default 5)
+
+@router.post("/scan-batch", summary="Procesar múltiples carpetas de PDFs en paralelo")
+async def scan_batch_folders(payload: BatchProcessRequest):
+    """
+    Escanea recursivamente las carpetas dadas en busca de archivos .pdf
+    y los procesa en paralelo usando asyncio y un semáforo.
+    Reporta progreso vía Socket.IO.
+    """
+    all_pdf_files = []
+    
+    # 1. Recolectar todos los PDFs
+    for folder in payload.folders:
+        if not os.path.exists(folder):
+            print(f"⚠️ Carpeta no encontrada: {folder}")
+            continue
+            
+        for root, dirs, files in os.walk(folder):
+            for file in files:
+                if file.lower().endswith(".pdf"):
+                    # Normalizar ruta para usar siempre '/' y evitar mezclas en Windows
+                    full_path = os.path.join(root, file).replace("\\", "/")
+                    all_pdf_files.append(full_path)
+    
+    total_files = len(all_pdf_files)
+    if total_files == 0:
+        return {"message": "No se encontraron archivos PDF en las rutas proporcionadas", "total": 0}
+
+    print(f"🚀 Iniciando procesamiento batch de {total_files} archivos con concurrencia {payload.concurrency}")
+    
+    # Notificar inicio
+    await sio.emit(EmitEvent.LOG, {
+        "type": "batch_start",
+        "total": total_files,
+        "message": f"Iniciando procesamiento de {total_files} archivos..."
+    })
+
+    # 2. Configurar Semáforo para controlar concurrencia
+    semaphore = asyncio.Semaphore(payload.concurrency)
+    results = []
+    processed_count = 0
+
+    async def process_single_pdf(file_path):
+        nonlocal processed_count
+        async with semaphore:
+            try:
+                # Procesar archivo
+                ocr_result = await analyze_first_page_oc(file_path)
+                
+                status = "success"
+                oc_value = ocr_result.get("O/C")
+                clase_doc = ocr_result.get("clase_documento")
+                denominacion = ocr_result.get("denominacion")
+                error = ocr_result.get("error")
+                
+                if error:
+                    status = "error"
+                
+                result_data = {
+                    "file_path": file_path,
+                    "file_name": os.path.basename(file_path),
+                    "status": status,
+                    "oc": oc_value,
+                    "clase_documento": clase_doc,
+                    "denominacion": denominacion,
+                    "error": error
+                }
+                
+                # Actualizar contador
+                processed_count += 1
+                
+                # Emitir progreso individual
+                await sio.emit(EmitEvent.LOG, {
+                    "type": "batch_progress",
+                    "current": processed_count,
+                    "total": total_files,
+                    "file": os.path.basename(file_path),
+                    "result": result_data
+                })
+                
+                return result_data
+                
+            except Exception as e:
+                print(f"Error procesando {file_path}: {e}")
+                processed_count += 1
+                return {
+                    "file_path": file_path, 
+                    "status": "error", 
+                    "error": str(e)
+                }
+
+    # 3. Crear tareas y ejecutar
+    tasks = [process_single_pdf(pdf) for pdf in all_pdf_files]
+    results = await asyncio.gather(*tasks)
+    
+    # 4. Resumen final
+    success_count = sum(1 for r in results if r["status"] == "success")
+    error_count = total_files - success_count
+    
+    summary = {
+        "total": total_files,
+        "success": success_count,
+        "errors": error_count,
+        "details": results
+    }
+    
+    await sio.emit(EmitEvent.LOG, {
+        "type": "batch_complete",
+        "summary": summary
+    })
+    
+    return summary
 
 @router.post("/scan", summary="Analizar documento con Gemini OCR")
 async def scan_document(
