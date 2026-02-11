@@ -31,10 +31,14 @@ export class SocketService {
 
     this.socket = io(socketUrl, {
       path: '/api/socket.io',
-      // Allow WebSocket upgrade (tries polling first, then upgrades). 
-      // If Nginx is configured correctly, this will switch to a single WebSocket connection.
-      transports: ['polling', 'websocket'],
-      autoConnect: true
+      // Force WebSocket to avoid polling issues (400 Bad Request) and sticky session requirements
+      transports: ['websocket'],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
     });
 
     this.socket.on('connect', () => {
