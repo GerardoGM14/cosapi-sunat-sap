@@ -73,4 +73,4 @@ async def process_modal_downloads_one_by_one(modal: Locator, page: Page, folder:
             logger.log(f"    - [ERROR] Botón de descarga no disponible.", Colors.RED)
 
         # Pausa de seguridad antes de la siguiente selección
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.5)

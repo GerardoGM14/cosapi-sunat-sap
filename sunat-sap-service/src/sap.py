@@ -112,6 +112,9 @@ async def appSap(args: ISap) -> IReturn:
                 )
 
                 validar_filtros = await bot.validar_filtros(frame=report['frame'])
+                
+                # input(f"Presiona Enter para continuar... [Validar Filtros]: {validar_filtros}")
+                
                 if not validar_filtros['success']:
                     if validar_filtros['error_system']:
                         io.emit(
@@ -148,8 +151,13 @@ async def appSap(args: ISap) -> IReturn:
                 )
 
                 await asyncio.sleep(3)
+                
+                # input("Presiona Enter para continuar... [Init]")
 
                 descargar_adjuntos = await bot.descargar_adjuntos(frame=report['frame'])
+                
+                # input("Presiona Enter para continuar... [Fin]")
+
                 if not descargar_adjuntos['success']:
                     if descargar_adjuntos['error_system']:
                         io.emit(
