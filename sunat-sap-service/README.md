@@ -40,7 +40,7 @@ Este método es útil para pruebas rápidas o desarrollo. Los argumentos se pasa
 ### Ejemplo de uso
 
 ```bash
-python main.py --folder "d:\\cosapi\\output" --code_sociedad "PE01" --date "17/01/2026" --ruc_sunat "12345678901" --user_sunat "testuser" --password_sunat "testpass" --correo_sap "test@sap.com" --password_sap "sappass"
+python main.py --folder "C:\Users\MARKETING\Desktop\ABRAHAN\COSAPI" --code_sociedad "PE01" --date "17/01/2026" --ruc_sunat "20100082391" --user_sunat "JAUREGUI" --password_sunat "Dante123*" --correo_sap "dantejauregui@sertech.pe" --password_sap "SapMty_2026" --socket_url "ws://localhost:3000"
 ```
 
 Asegúrate de que el gestor de configuración (`manager_args.py`) esté configurado para usar el método `console` si deseas utilizar esta opción.

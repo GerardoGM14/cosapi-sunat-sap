@@ -94,3 +94,7 @@ sunat-sap-service/uv.lock
 # File types ignored in this service
 sunat-sap-service/*.png
 sunat-sap-service/*.json
+
+
+*v1*
+*v2*
