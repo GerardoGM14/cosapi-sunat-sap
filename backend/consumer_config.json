@@ -1,7 +1,7 @@
 {
     "api_url": "https://api-consumerai.azurewebsites.net/api/register_tokens_v2",
     "api_key": "PhG/Pss-nn8h:GX",
-    "grupo_id": 1,
+    "grupo_id": "null",
     "servicio_id": 2,
     "origen": "AppWeb COSAPI",
     "proyecto": "AppBot COSAPI-OCR",

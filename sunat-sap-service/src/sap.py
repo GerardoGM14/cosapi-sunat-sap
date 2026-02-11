@@ -8,6 +8,7 @@ from src.bot_manager import BotSap
 from src.socket_client.manager import socket_manager as io
 from src.schemas.ISocket import EmitEvent
 from src.config.config import Config
+from src.config.config_env import ConfigEnv
 
 
 logger = ColoredLogger()
@@ -22,7 +23,8 @@ async def appSap(args: ISap) -> IReturn:
     for i in range(intento):
         try:
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
+                headless_mode = str(ConfigEnv.HEADLESS).lower() == 'true'
+                browser = await p.chromium.launch(headless=headless_mode)
                 page = await browser.new_page()
 
                 # --- Listeners para logs del navegador ---
