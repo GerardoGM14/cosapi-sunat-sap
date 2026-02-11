@@ -93,7 +93,7 @@ async def send_log_background(
 
         async with httpx.AsyncClient() as client:
             response = await client.post(API_LOG_URL, json=payload, headers=headers, timeout=5.0)
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:
                 print(f"✅ Log de consumo registrado exitosamente en API externa. ID: {API_LOG_GRUPO_ID}")
             else:
                 print(f"⚠️ Error registrando consumo en API externa: {response.status_code} - {response.text}")

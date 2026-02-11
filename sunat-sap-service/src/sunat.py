@@ -22,7 +22,7 @@ async def appSunat(args: ISunat) -> IReturn:
     for i in range(intento):
         try:
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=False)
+                browser = await p.chromium.launch(headless=True)
                 page = await browser.new_page()
 
                 # --- Listeners para logs del navegador ---
