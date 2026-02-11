@@ -21,14 +21,14 @@ print("Resultado de appSap:\n")
 for key, value in result.items():
     print(f"{key}: {value}")
 
-# logger.log("⚙️ Iniciando appSunat...", Colors.BLUE)
-# result = asyncio.run(appSunat(args=argsAll['sunat']))
+logger.log("⚙️ Iniciando appSunat...", Colors.BLUE)
+result = asyncio.run(appSunat(args=argsAll['sunat']))
 
-# print("")
-# print("="*50)
-# print("Resultado de appSunat:\n")
-# for key, value in result.items():
-#     print(f"{key}: {value}")
+print("")
+print("="*50)
+print("Resultado de appSunat:\n")
+for key, value in result.items():
+    print(f"{key}: {value}")
 
 
 socket_manager.disconnect()
