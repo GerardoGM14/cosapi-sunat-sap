@@ -5,6 +5,7 @@ import shutil
 import os
 import uuid
 import asyncio
+from datetime import datetime
 from pydantic import BaseModel
 from app.socket_manager import sio, EmitEvent
 
@@ -77,11 +78,54 @@ async def scan_batch_folders(payload: BatchProcessRequest):
                 # Validación de requisitos documentarios si hay O/C
                 validation_result = None
                 if oc_value and status == "success":
+                    # Emitir log de inicio de validación
+                    await sio.emit(EmitEvent.LOG, {
+                        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "message": f"🔍 Validando requisitos para {os.path.basename(file_path)} (O/C: {oc_value})..."
+                    })
+
                     try:
                         validation_result = await validate_ocr_requirements(file_path, oc_value)
+                        
+                        # Preparar mensaje de resultado para log
+                        if validation_result.get("validation_status") == "performed":
+                            res = validation_result.get("result", {})
+                            is_compliant = res.get("is_compliant", False)
+                            missing = res.get("missing_documents", [])
+                            obs = res.get("observations", "")
+                            
+                            status_icon = "✅" if is_compliant else "❌"
+                            msg_parts = [f"Validación {status_icon}"]
+                            
+                            if not is_compliant:
+                                msg_parts.append("No cumple requisitos")
+                                if missing:
+                                    msg_parts.append(f"Faltan: {', '.join(missing)}")
+                            else:
+                                msg_parts.append("Cumple requisitos")
+                                
+                            if obs:
+                                msg_parts.append(f"Obs: {obs}")
+                                
+                            log_message = " - ".join(msg_parts)
+                        elif validation_result.get("validation_status") == "skipped":
+                            log_message = f"Validación omitida: {validation_result.get('reason')}"
+                        else:
+                            log_message = "Resultado de validación desconocido"
+
+                        await sio.emit(EmitEvent.LOG, {
+                            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "message": f"📄 {os.path.basename(file_path)}: {log_message}"
+                        })
+
                     except Exception as val_e:
                         print(f"Error en validación para {file_path}: {val_e}")
                         validation_result = {"validation_status": "error", "error": str(val_e)}
+                        
+                        await sio.emit(EmitEvent.LOG, {
+                            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "message": f"⚠️ Error validando {os.path.basename(file_path)}: {val_e}"
+                        })
 
                 result_data = {
                     "file_path": file_path,
@@ -103,7 +147,10 @@ async def scan_batch_folders(payload: BatchProcessRequest):
                     "current": processed_count,
                     "total": total_files,
                     "file": os.path.basename(file_path),
-                    "result": result_data
+                    "result": result_data,
+                    # Compatibilidad con visor de logs genérico
+                    "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "message": f"Procesado {os.path.basename(file_path)}: {status}"
                 })
                 
                 return result_data
@@ -134,7 +181,9 @@ async def scan_batch_folders(payload: BatchProcessRequest):
     
     await sio.emit(EmitEvent.LOG, {
         "type": "batch_complete",
-        "summary": summary
+        "summary": summary,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "message": f"Proceso batch completado. Éxitos: {success_count}, Errores: {error_count}"
     })
     
     return summary

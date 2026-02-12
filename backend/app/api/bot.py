@@ -181,19 +181,16 @@ async def run_bot_logic(config: BotConfig):
                         clean_line = ansi_escape.sub('', line).strip()
                         
                         if clean_line:
-                            # Filter: Only show logs with specific icons or keywords (User Request)
-                            # Keep: ✅ (Success), ⚠️/⚠ (Warning), ❌ (Error), 📂 (Folder), 🔍 (Search/Process)
-                            # Also keep explicit "Error" or "Exception" text
-                            allowed_markers = ["✅", "⚠️", "⚠", "❌", "📂", "🔍", "Error", "Exception", "Fallido"]
-                            
                             # Filter out technical/debug logs
-                            forbidden_markers = ["Emitiendo evento", "{'message':", "{'date':"]
+                            forbidden_markers = ["Emitiendo evento", "{'message':", "{'date':", "Debug", "DEBUG", "debug"]
 
                             if any(bad in clean_line for bad in forbidden_markers):
                                 continue
 
-                            if not any(ok in clean_line for ok in allowed_markers):
-                                continue
+                            # Previously we filtered by allowed_markers, but user wants to see everything except Debug
+                            # allowed_markers = ["✅", "⚠️", "⚠", "❌", "📂", "🔍", "Error", "Exception", "Fallido"]
+                            # if not any(ok in clean_line for ok in allowed_markers):
+                            #    continue
 
                             # Add checkmark if it was green (for frontend styling)
                             if is_green and "✅" not in clean_line:
