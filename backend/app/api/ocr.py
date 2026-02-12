@@ -142,6 +142,7 @@ async def scan_batch_folders(payload: BatchProcessRequest):
                 processed_count += 1
                 
                 # Emitir progreso individual
+                icon = "✅" if status == "success" else "❌"
                 await sio.emit(EmitEvent.LOG, {
                     "type": "batch_progress",
                     "current": processed_count,
@@ -150,7 +151,7 @@ async def scan_batch_folders(payload: BatchProcessRequest):
                     "result": result_data,
                     # Compatibilidad con visor de logs genérico
                     "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "message": f"Procesado {os.path.basename(file_path)}: {status}"
+                    "message": f"{icon} Procesado {os.path.basename(file_path)}: {status}"
                 })
                 
                 return result_data
