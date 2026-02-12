@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AppConfigService } from '../../../../services/app-config.service';
 import { SociedadService } from '../../../../services/sociedad.service';
@@ -86,7 +86,8 @@ export class EjecucionesComponent implements OnInit {
     private configService: AppConfigService,
     private sociedadService: SociedadService,
     private proveedorService: ProveedorService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private cdr: ChangeDetectorRef
   ) {
     // Click outside listener for calendar
     document.addEventListener('click', (e: any) => {
@@ -484,6 +485,9 @@ export class EjecucionesComponent implements OnInit {
         configuracion: this.selectedLogTask.nombre, // Or use data from log if available
         estado: logData.message
       });
+      
+      // Force view update since socket events run outside Angular zone
+      this.cdr.detectChanges();
     });
   }
 

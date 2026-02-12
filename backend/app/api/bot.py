@@ -24,7 +24,7 @@ class SapConfig(BaseModel):
 class GeneralConfig(BaseModel):
     sociedad: str
     fecha: str
-    folder: str
+    folder: str | None = None
     hora: str | None = None
     dias: str | None = None
 
@@ -40,9 +40,20 @@ async def run_bot_endpoint(config: BotConfig):
 
 async def run_bot_logic(config: BotConfig):
     try:
-        if not config.general.folder:
-            raise HTTPException(status_code=400, detail="La carpeta de salida es requerida")
         current_dir = os.getcwd()
+        
+        # Lógica de carpeta dinámica según SO
+        if sys.platform == "win32":
+            # En Windows, forzamos la carpeta 'output' dentro del directorio actual del backend
+            folder_path = os.path.join(current_dir, "output")
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+            print(f"ℹ️ Windows detectado. Carpeta de salida forzada a: {folder_path}")
+        else:
+            # En Linux u otros, respetamos la configuración enviada o requerimos que exista
+            if not config.general.folder:
+                raise HTTPException(status_code=400, detail="La carpeta de salida es requerida")
+            folder_path = os.path.normpath(config.general.folder)
         possible_service_dir = os.path.abspath(os.path.join(current_dir, "..", "sunat-sap-service"))
         
         if not os.path.exists(possible_service_dir):
@@ -116,8 +127,6 @@ async def run_bot_logic(config: BotConfig):
                     subprocess.run(["xhost", "+local:"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
                 except Exception as e:
                     print(f"⚠️ No se pudo ejecutar xhost: {e}")
-
-        folder_path = os.path.normpath(config.general.folder)
 
         args = [
             python_executable,

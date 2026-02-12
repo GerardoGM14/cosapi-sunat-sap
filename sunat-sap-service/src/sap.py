@@ -46,7 +46,7 @@ async def appSap(args: ISap) -> IReturn:
                 # Obtenemos la referencia a la nueva página
                 new_page = await new_page_info.value
                 await new_page.wait_for_load_state()
-                logger.log("Nueva pestaña de login capturada con éxito.", color=Colors.GREEN)
+                logger.log("✅ Nueva pestaña de login capturada con éxito.", color=Colors.GREEN)
 
                 bot = BotSap(
                     page=new_page,
