@@ -204,6 +204,107 @@ def classify_document(oc_value: str) -> dict:
         "denominacion": " / ".join(denominaciones)
     }
 
+async def validate_ocr_requirements(file_path: str, oc_number: str) -> dict:
+    """
+    Valida los requisitos documentarios según el prefijo del O/C.
+    Lee todo el PDF y usa Gemini para buscar documentos obligatorios.
+    """
+    if not oc_number:
+        return {"validation_status": "skipped", "reason": "No O/C number provided"}
+        
+    prefix = oc_number[:2]
+    
+    requirements_prompt = ""
+    if prefix == "43":
+        requirements_prompt = """
+        TIPO: ORDEN DE SERVICIO (Prefijo 43...)
+        DOCUMENTOS OBLIGATORIOS:
+        1. Factura
+        2. HES (Hoja de Entrada de Servicios)
+        3. Orden de Servicio completa
+        
+        DOCUMENTOS OPCIONALES:
+        - Valorización
+        
+        REGLA DE VALIDACIÓN DE FIRMAS:
+        - Si detectas una 'Valorización', verifica si tiene firmas (manuscritas o digitales).
+        """
+    elif prefix == "40":
+        requirements_prompt = """
+        TIPO: ORDEN DE COMPRA (Prefijo 40...)
+        DOCUMENTOS OBLIGATORIOS:
+        1. Factura
+        2. Guías de remisión
+        3. HEM (Hoja de Entrada de Materiales)
+        4. Orden de Compra completa
+        """
+    elif prefix == "42":
+        requirements_prompt = """
+        TIPO: ORDEN DE SUBCONTRATO (Prefijo 42...)
+        DOCUMENTOS OBLIGATORIOS:
+        1. Factura
+        2. Valorización
+        3. HES (Hoja de Entrada de Servicios)
+        4. Orden de Subcontrato completa
+        """
+    else:
+        return {"validation_status": "skipped", "reason": "No validation rules for O/C prefix " + prefix}
+
+    print(f"🔍 Validando requisitos para O/C {oc_number} ({prefix}) en {file_path}")
+
+    try:
+        # Leer todo el PDF
+        with open(file_path, "rb") as f:
+            file_content = f.read()
+            
+        client = genai.Client(api_key=API_KEY)
+        
+        prompt = f"""
+        Analiza este documento PDF completo.
+        Tu tarea es validar si el paquete de documentos cumple con los requisitos para una {requirements_prompt.splitlines()[1].strip()}.
+        
+        {requirements_prompt}
+        
+        Devuelve un JSON ESTRICTO con la siguiente estructura:
+        {{
+            "present_documents": ["Lista", "de", "documentos", "encontrados"],
+            "missing_documents": ["Lista", "de", "documentos", "obligatorios", "faltantes"],
+            "valorizacion_detected": true/false,
+            "valorizacion_signed": true/false/null, (null si no hay valorización, true si tiene firmas, false si no)
+            "is_compliant": true/false, (true solo si están TODOS los obligatorios)
+            "observations": "Texto breve describiendo hallazgos o problemas (ej. falta firma en valorización)"
+        }}
+        NO uses markdown. Solo JSON.
+        """
+
+        response = await client.aio.models.generate_content(
+            model=MODEL_NAME or "gemini-2.0-flash",
+            contents=[
+                types.Content(
+                    parts=[
+                        types.Part.from_bytes(data=file_content, mime_type="application/pdf"),
+                        types.Part.from_text(text=prompt)
+                    ]
+                )
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
+        )
+        
+        if response.text:
+            try:
+                validation_result = json.loads(response.text.replace("```json", "").replace("```", "").strip())
+                return {"validation_status": "performed", "result": validation_result}
+            except json.JSONDecodeError:
+                return {"validation_status": "error", "error": "Invalid JSON from Gemini validation"}
+                
+        return {"validation_status": "error", "error": "No response text from Gemini validation"}
+
+    except Exception as e:
+        print(f"⚠️ Error en validate_ocr_requirements: {e}")
+        return {"validation_status": "error", "error": str(e)}
+
 async def analyze_first_page_oc(file_path: str) -> dict:
     """
     Analiza solo la primera página del PDF para encontrar el O/C.

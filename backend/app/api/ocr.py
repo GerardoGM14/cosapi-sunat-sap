@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Body
-from app.services.gemini_ocr import analyze_document_content, analyze_first_page_oc
+from app.services.gemini_ocr import analyze_document_content, analyze_first_page_oc, validate_ocr_requirements
 from typing import Optional, List
 import shutil
 import os
@@ -74,6 +74,15 @@ async def scan_batch_folders(payload: BatchProcessRequest):
                 if error:
                     status = "error"
                 
+                # Validación de requisitos documentarios si hay O/C
+                validation_result = None
+                if oc_value and status == "success":
+                    try:
+                        validation_result = await validate_ocr_requirements(file_path, oc_value)
+                    except Exception as val_e:
+                        print(f"Error en validación para {file_path}: {val_e}")
+                        validation_result = {"validation_status": "error", "error": str(val_e)}
+
                 result_data = {
                     "file_path": file_path,
                     "file_name": os.path.basename(file_path),
@@ -81,6 +90,7 @@ async def scan_batch_folders(payload: BatchProcessRequest):
                     "oc": oc_value,
                     "clase_documento": clase_doc,
                     "denominacion": denominacion,
+                    "validation": validation_result,
                     "error": error
                 }
                 
