@@ -9,7 +9,7 @@ from src.socket_client.manager import socket_manager as io
 from src.schemas.ISocket import EmitEvent
 from src.config.config import Config
 from src.config.config_env import ConfigEnv
-
+from src.utils.limpiar_duplicados_excel_sap import limpiar_duplicados_excel
 
 logger = ColoredLogger()
 
@@ -173,6 +173,9 @@ async def appSap(args: ISap) -> IReturn:
                             data={'message': descargar_adjuntos['message'], 'date': dateCurrent()}
                         )
                         logger.log(descargar_adjuntos['message'], color=Colors.YELLOW)
+
+
+                await limpiar_duplicados_excel(descargar_excel['file_path_sap'])
 
                 io.emit(
                     event=EmitEvent.SAP,
