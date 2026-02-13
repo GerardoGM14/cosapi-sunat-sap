@@ -8,6 +8,7 @@ logger = ColoredLogger()
 
 async def process_modal_downloads_one_by_one(modal: Locator, page: Page, folder: str):
     logger.log(f"\n[FOLDER] {folder}...", Colors.CYAN)
+    os.makedirs(folder, exist_ok=True)
     
     list_items = modal.locator("li.sapMLIB") 
     files_count = await list_items.count()

@@ -167,6 +167,11 @@ async def appSunat(args: ISunat) -> IReturn:
                 except:
                     pass
 
+                io.emit(
+                    event=EmitEvent.SUNAT,
+                    data={'message': '✅ Finalizando automatización SUNAT', 'date': dateCurrent()}
+                )
+
                 return {
                     'success': True,
                     'error_system': False,

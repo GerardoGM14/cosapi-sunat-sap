@@ -179,6 +179,11 @@ async def appSap(args: ISap) -> IReturn:
                     data={'message': descargar_adjuntos['message'], 'date': dateCurrent()}
                 )
 
+                io.emit(
+                    event=EmitEvent.SAP,
+                    data={'message': '✅ Finalizando automatización SAP', 'date': dateCurrent()}
+                )
+
                 logger.log(descargar_adjuntos['message'], color=Colors.GREEN)
                 return {
                     'success': True,

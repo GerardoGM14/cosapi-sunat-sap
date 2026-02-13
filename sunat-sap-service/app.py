@@ -12,14 +12,14 @@ argsAll = get_args()
 socket_manager.initialize(server_url=argsAll['socket_url'])
 socket_manager.connect()
 
-logger.log("⚙️ Iniciando appSap...", Colors.BLUE)
-result = asyncio.run(appSap(args=argsAll['sap']))
+#logger.log("⚙️ Iniciando appSap...", Colors.BLUE)
+#result = asyncio.run(appSap(args=argsAll['sap']))
 
-print("")
-print("="*50)
-print("Resultado de appSap:\n")
-for key, value in result.items():
-    print(f"{key}: {value}")
+#print("")
+#print("="*50)
+#print("Resultado de appSap:\n")
+#for key, value in result.items():
+#    print(f"{key}: {value}")
 
 logger.log("⚙️ Iniciando appSunat...", Colors.BLUE)
 result = asyncio.run(appSunat(args=argsAll['sunat']))

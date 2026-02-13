@@ -20,16 +20,29 @@ async def disconnect(sid):
 
 @sio.on(EmitEvent.LOG)
 async def handle_log(sid, data: Any):
-    # Mostramos el objeto completo (JSON) como pidió el usuario
-    print(f"[BOT LOG] {data}")
+    # Print formatted message if it's a dict with 'message'
+    if isinstance(data, dict) and 'message' in data:
+         print(f"[BOT LOG] {data['message']}")
+    else:
+         print(f"[BOT LOG] {data}")
     await sio.emit(EmitEvent.LOG, data, skip_sid=sid)
 
 @sio.on(EmitEvent.SAP)
 async def handle_sap(sid, data: Any):
-    print(f"[BOT SAP] {data}")
+    if isinstance(data, dict) and 'message' in data:
+         print(f"[BOT SAP] {data['message']}")
+    else:
+         print(f"[BOT SAP] {data}")
     await sio.emit(EmitEvent.SAP, data, skip_sid=sid)
+    # Also emit to log:bot so frontend can see it
+    await sio.emit(EmitEvent.LOG, data, skip_sid=sid)
 
 @sio.on(EmitEvent.SUNAT)
 async def handle_sunat(sid, data: Any):
-    print(f"[BOT SUNAT] {data}")
+    if isinstance(data, dict) and 'message' in data:
+         print(f"[BOT SUNAT] {data['message']}")
+    else:
+         print(f"[BOT SUNAT] {data}")
     await sio.emit(EmitEvent.SUNAT, data, skip_sid=sid)
+    # Also emit to log:bot so frontend can see it
+    await sio.emit(EmitEvent.LOG, data, skip_sid=sid)

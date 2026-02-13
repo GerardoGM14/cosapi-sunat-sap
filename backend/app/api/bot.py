@@ -44,11 +44,18 @@ async def run_bot_logic(config: BotConfig):
         base_output = os.path.join(current_dir, "output")
         
         # Lógica de carpeta centralizada
+        # Sanitizar fecha para nombre de carpeta (reemplazar / por -)
+        safe_date = config.general.fecha.replace("/", "-")
+        # Obtener hora actual para el nombre de la carpeta (hora de ejecución)
+        current_time_str = datetime.now().strftime("%H-%M-%S")
+        
+        subfolder_name = f"{config.general.sociedad}_{safe_date}_{current_time_str}"
+        
         if sys.platform == "win32":
-            folder_path = os.path.join(base_output, "windows")
+            folder_path = os.path.join(base_output, "windows", subfolder_name)
             os_name = "Windows"
         else:
-            folder_path = os.path.join(base_output, "linux")
+            folder_path = os.path.join(base_output, "linux", subfolder_name)
             os_name = "Linux"
 
         if not os.path.exists(folder_path):
@@ -190,7 +197,46 @@ async def run_bot_logic(config: BotConfig):
                         # Clean ANSI codes
                         clean_line = ansi_escape.sub('', line).strip()
                         
+                        # Remove potential bytes string representation artifacts
+                        # Matches b'...' or b"..." and extracts content
+                        import re
+                        bytes_pattern = re.compile(r"^b['\"](.*)['\"]$")
+                        match = bytes_pattern.match(clean_line)
+                        if match:
+                            clean_line = match.group(1)
+                        
                         if clean_line:
+                            # Parse JSON-like logs from BOT SAP/SUNAT if present
+                            # Expected format in stdout: [BOT SAP] {'message': '...', 'date': '...'}
+                            if "[BOT SAP]" in clean_line or "[BOT SUNAT]" in clean_line:
+                                import ast
+                                parsed_successfully = False
+                                try:
+                                    # Extract dictionary part
+                                    if "{" in clean_line and "}" in clean_line:
+                                        dict_str = clean_line.split("{", 1)[1].rsplit("}", 1)[0]
+                                        dict_str = "{" + dict_str + "}"
+                                        log_data = ast.literal_eval(dict_str)
+                                        clean_line = log_data.get("message", clean_line)
+                                        parsed_successfully = True
+                                        
+                                        # Add icon if missing
+                                        if "SAP" in clean_line and "🚀" not in clean_line:
+                                             clean_line = f"🚀 {clean_line}"
+                                except:
+                                    # Fallback: Try Regex if ast fails
+                                    try:
+                                        msg_match = re.search(r"'message':\s*['\"](.*?)['\"],\s*'date'", clean_line)
+                                        if msg_match:
+                                            clean_line = msg_match.group(1)
+                                            parsed_successfully = True
+                                    except:
+                                        pass
+
+                                # If we failed to parse but it looks like a raw log, FORCE ignore it
+                                if not parsed_successfully and "{'message':" in clean_line:
+                                    continue
+
                             # Filter out technical/debug logs
                             forbidden_markers = [
                                 "Emitiendo evento", 
@@ -211,6 +257,15 @@ async def run_bot_logic(config: BotConfig):
 
                             # Whitelist: Only allow logs with specific icons as requested
                             allowed_markers = ["✅", "⬇️", "⚠️", "⚠", "❌", "📂", "🔍", "📄", "🚀", "🤖"]
+                            
+                            # Auto-add icons for specific start/end phrases if missing
+                            if "Iniciando automatización" in clean_line or "Iniciando proceso" in clean_line:
+                                if not any(x in clean_line for x in ["🚀", "🤖"]):
+                                    clean_line = f"🚀 {clean_line}"
+                            if "Finalizando automatización" in clean_line:
+                                if not any(x in clean_line for x in ["✅", "🛑"]):
+                                    clean_line = f"✅ {clean_line}"
+
                             if not any(ok in clean_line for ok in allowed_markers):
                                continue
 
@@ -218,7 +273,7 @@ async def run_bot_logic(config: BotConfig):
                             if is_green and "✅" not in clean_line:
                                 clean_line = f"✅ {clean_line}"
 
-                            print(f"🤖 [BOT] {clean_line}")
+                            print(f"{clean_line}")
                             
                             # Save to Database if execution_id is present
                             if exec_id:
