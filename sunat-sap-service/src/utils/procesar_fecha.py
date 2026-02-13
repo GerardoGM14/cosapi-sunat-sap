@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 
-def procesar_fecha(fecha: str, dias: int = 3) -> tuple[str, str]:
+def procesar_fecha(fecha: str, dias: int = 4) -> tuple[str, str]:
     try:
         fecha_obj = datetime.strptime(fecha, "%d/%m/%Y")
 
