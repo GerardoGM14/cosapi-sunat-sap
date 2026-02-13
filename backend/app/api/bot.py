@@ -41,19 +41,20 @@ async def run_bot_endpoint(config: BotConfig):
 async def run_bot_logic(config: BotConfig):
     try:
         current_dir = os.getcwd()
+        base_output = os.path.join(current_dir, "output")
         
-        # Lógica de carpeta dinámica según SO
+        # Lógica de carpeta centralizada
         if sys.platform == "win32":
-            # En Windows, forzamos la carpeta 'output' dentro del directorio actual del backend
-            folder_path = os.path.join(current_dir, "output")
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-            print(f"ℹ️ Windows detectado. Carpeta de salida forzada a: {folder_path}")
+            folder_path = os.path.join(base_output, "windows")
+            os_name = "Windows"
         else:
-            # En Linux u otros, respetamos la configuración enviada o requerimos que exista
-            if not config.general.folder:
-                raise HTTPException(status_code=400, detail="La carpeta de salida es requerida")
-            folder_path = os.path.normpath(config.general.folder)
+            folder_path = os.path.join(base_output, "linux")
+            os_name = "Linux"
+
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path, exist_ok=True)
+            
+        print(f"ℹ️ {os_name} detectado. Carpeta de salida centralizada en: {folder_path}")
         possible_service_dir = os.path.abspath(os.path.join(current_dir, "..", "sunat-sap-service"))
         
         if not os.path.exists(possible_service_dir):
