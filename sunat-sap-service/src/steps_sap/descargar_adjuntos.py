@@ -27,7 +27,7 @@ async def descargar_adjuntos(frame: FrameLocator, page: Page, folder: str) -> IR
         fila_real_counter = 0
         last_key = None
         consecutive_same_count = 0
-        MAX_SAME_LIMIT = 3  # Reducido a 3 para detectar más rápido el fin
+        MAX_SAME_LIMIT = 20  # Reducido a 3 para detectar más rápido el fin
         no_new_data_iterations = 0
         while True:
             # 1. Obtener filas actuales en el DOM
@@ -100,6 +100,10 @@ async def descargar_adjuntos(frame: FrameLocator, page: Page, folder: str) -> IR
                 # --- FIX UBUNTU: Scroll Horizontal Dinámico ---
                 btn_selector = 'button[title="Visualizar"], button[title="Show"], button:has(.sapUiIcon[data-sap-ui-icon-content=""])'
                 button_visualizar = row.locator(btn_selector)
+
+                if posicion_value and int(posicion_value) != 1:
+                    logger.log(f"   [Skip] Omitiendo fila con posición '{posicion_value}' (se requiere '1').", Colors.BRIGHT_RED)
+                    continue
 
                 try:
                     await button_visualizar.evaluate("node => node.scrollIntoView({ inline: 'center', block: 'nearest' })")
