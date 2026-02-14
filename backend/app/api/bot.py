@@ -62,256 +62,94 @@ async def run_bot_logic(config: BotConfig):
             os.makedirs(folder_path, exist_ok=True)
             
         print(f"ℹ️ {os_name} detectado. Carpeta de salida centralizada en: {folder_path}")
-        possible_service_dir = os.path.abspath(os.path.join(current_dir, "..", "sunat-sap-service"))
         
-        if not os.path.exists(possible_service_dir):
-             possible_service_dir = os.path.abspath(os.path.join(current_dir, "sunat-sap-service"))
+        # --- NUEVA LÓGICA: ESCRIBIR EN CARPETA DE INTERCAMBIO (WATCHER) ---
         
-        service_dir = possible_service_dir
-        script_path = os.path.join(service_dir, "app.py")
+        # 1. Definir ruta de la carpeta compartida (Exchange)
+        # Asumimos que la carpeta 'dmz/exchange/pendientes' es accesible desde el backend
+        # En producción, esto debería ser una ruta de red montada o volumen compartido
         
-        if not os.path.exists(script_path):
-             if sys.platform == "win32":
-                script_path = r"c:\Users\Soporte\Documents\Proyectos\ocr-cosapi-full\sunat-sap-service\app.py"
-             else:
-                script_path = os.path.join(os.getcwd(), "sunat-sap-service", "app.py")
-                if not os.path.exists(script_path):
-                     script_path = "/opt/ocr-cosapi-full/sunat-sap-service/app.py"
-
-             service_dir = os.path.dirname(script_path)
-        python_executable = sys.executable
+        # Buscamos la carpeta dmz relativa al backend
+        # backend/app/api/bot.py -> backend/ -> root/ -> dmz/
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_dir))))
+        # Ajuste de ruta: estamos en backend/app/api, subimos 3 niveles para llegar a backend, uno mas para root
+        # Mejor usamos ruta relativa segura
         
-        if sys.platform == "win32":
-            possible_service_venv = os.path.join(service_dir, ".venv", "Scripts", "python.exe")
-        else:
-            possible_service_venv = os.path.join(service_dir, ".venv", "bin", "python")
-
-        if os.path.exists(possible_service_venv):
-            python_executable = possible_service_venv
-
-        env = os.environ.copy()
-        env["CONFIG_METHOD"] = "console"
-        env["PYTHONPATH"] = service_dir
-        env["HEADLESS"] = "false"
-        env["PYTHONUNBUFFERED"] = "1"
-
-        if sys.platform == "linux":
-            if not env.get("DISPLAY"):
-                env_file_path = os.path.join(service_dir, ".env")
-                display_from_env = None
-                if os.path.exists(env_file_path):
-                    try:
-                        with open(env_file_path, "r") as f:
-                            for line in f:
-                                if line.strip().startswith("DISPLAY="):
-                                    display_from_env = line.strip().split("=", 1)[1].strip()
-                                    break
-                    except:
-                        pass
-                
-                if display_from_env:
-                    env["DISPLAY"] = display_from_env
-                    print(f"ℹ️ Usando DISPLAY desde .env: {display_from_env}")
-                else:
-                    print("⚠️ Variable DISPLAY no encontrada o vacía. Asignando DISPLAY=:1 (predeterminado para este servidor)")
-                    env["DISPLAY"] = ":1"
-
-                home_dir = os.path.expanduser("~")
-                xauth_path = os.path.join(home_dir, ".Xauthority")
-                
-                if os.path.exists(xauth_path):
-                    env["XAUTHORITY"] = xauth_path
-                    print(f"ℹ️ Usando XAUTHORITY: {xauth_path}")
-                else:
-                    possible_xauth = "/home/sertech/.Xauthority"
-                    if os.path.exists(possible_xauth):
-                         env["XAUTHORITY"] = possible_xauth
-                         print(f"ℹ️ Usando XAUTHORITY explícito: {possible_xauth}")
-            else:
-                print(f"ℹ️ Usando DISPLAY existente: {env['DISPLAY']}")
+        exchange_pending_dir = os.path.join(current_dir, "..", "..", "..", "dmz", "exchange", "pendientes")
+        exchange_pending_dir = os.path.abspath(exchange_pending_dir)
         
-            if env.get("DISPLAY"):
-                try:
-                    subprocess.run(["xhost", "+local:"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-                except Exception as e:
-                    print(f"⚠️ No se pudo ejecutar xhost: {e}")
+        if not os.path.exists(exchange_pending_dir):
+            # Fallback: intentar ruta absoluta común si no funciona la relativa (ej. desarrollo)
+             exchange_pending_dir = r"c:\Users\Soporte\Documents\Proyectos\ocr-cosapi-full\dmz\exchange\pendientes"
+             if not os.path.exists(exchange_pending_dir):
+                  raise Exception(f"No se encuentra la carpeta de intercambio: {exchange_pending_dir}")
 
-        args = [
-            python_executable,
-            script_path,
-            "--folder", folder_path,
-            "--date", config.general.fecha, 
-            "--ruc_sunat", config.sunat.ruc, 
-            "--user_sunat", config.sunat.usuario, 
-            "--password_sunat", config.sunat.claveSol, 
-            "--correo_sap", config.sap.usuario, 
-            "--password_sap", config.sap.password, 
-            "--code_sociedad", config.general.sociedad
-        ]
-
-        if config.general.hora:
-            args.extend(["--time", config.general.hora])
-
-        if config.general.dias:
-            args.extend(["--days", config.general.dias])
+        # 2. Preparar el payload JSON
+        # Calculamos los argumentos como antes para mantener compatibilidad con la estructura que espera app.py
         
-        socket_url = os.environ.get("SOCKET_URL")
+        month = int(config.general.fecha.split("/")[1])
+        year = int(config.general.fecha.split("/")[2])
         
-        if not socket_url:
-             socket_url = "http://127.0.0.1:8001"
-             print(f"ℹ️ Configuración automática: Usando {socket_url} (Localhost)")
+        folder_sap = os.path.join(folder_path, 'sap')
+        folder_sunat = os.path.join(folder_path, 'sunat')
+        
+        job_data = {
+            'sap': {
+                'code_sociedad': config.general.sociedad,
+                'date': config.general.fecha,
+                'time': config.general.hora,
+                'days': config.general.dias,
+                'folder': folder_sap,
+                'cred': {
+                    'email': config.sap.usuario,
+                    'password': config.sap.password
+                }
+            },
+            'sunat': {
+                'date': {
+                    'month': month,
+                    'year': year
+                },
+                'time': config.general.hora,
+                'days': config.general.dias,
+                'folder': folder_sunat,
+                'cred': {
+                    'ruc': config.sunat.ruc,
+                    'user': config.sunat.usuario,
+                    'clave': config.sunat.claveSol
+                },
+                'input_date': config.general.fecha
+            },
+            'socket_url': "http://localhost:8001", # El watcher debe saber a dónde reportar
+            'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
 
-        print(f" Socket URL seleccionada para el bot: {socket_url}")
-        args.extend(["--socket_url", socket_url])
+        # 3. Escribir archivo JSON
+        job_id = f"job_{config.general.sociedad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{config.execution_id or 0}.json"
+        job_file_path = os.path.join(exchange_pending_dir, job_id)
         
-        print(f"🚀 Ejecutando bot: {' '.join(args)}")
-        
-        # Force UTF-8 for the subprocess to avoid UnicodeEncodeError on Windows
-        env["PYTHONIOENCODING"] = "utf-8"
-
-        process = subprocess.Popen(
-            args,
-            cwd=service_dir,
-            env=env,
-            stdout=subprocess.PIPE, 
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-            encoding='utf-8'
-        )
-        
-        loop = asyncio.get_running_loop()
-
-        # Stream output function with debug prints
-        def stream_output(proc, event_loop, exec_id):
-            import re
-            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        import json
+        with open(job_file_path, 'w', encoding='utf-8') as f:
+            json.dump(job_data, f, indent=4, ensure_ascii=False)
             
-            try:
-                print("🔵 Iniciando captura de logs del bot...")
-                for line in proc.stdout:
-                    if line:
-                        # Detect if line has green color (validation/success)
-                        is_green = '\033[92m' in line or '\033[32m' in line
-                        
-                        # Clean ANSI codes
-                        clean_line = ansi_escape.sub('', line).strip()
-                        
-                        # Remove potential bytes string representation artifacts
-                        # Matches b'...' or b"..." and extracts content
-                        import re
-                        bytes_pattern = re.compile(r"^b['\"](.*)['\"]$")
-                        match = bytes_pattern.match(clean_line)
-                        if match:
-                            clean_line = match.group(1)
-                        
-                        if clean_line:
-                            # Parse JSON-like logs from BOT SAP/SUNAT if present
-                            # Expected format in stdout: [BOT SAP] {'message': '...', 'date': '...'}
-                            if "[BOT SAP]" in clean_line or "[BOT SUNAT]" in clean_line:
-                                import ast
-                                parsed_successfully = False
-                                try:
-                                    # Extract dictionary part
-                                    if "{" in clean_line and "}" in clean_line:
-                                        dict_str = clean_line.split("{", 1)[1].rsplit("}", 1)[0]
-                                        dict_str = "{" + dict_str + "}"
-                                        log_data = ast.literal_eval(dict_str)
-                                        clean_line = log_data.get("message", clean_line)
-                                        parsed_successfully = True
-                                        
-                                        # Add icon if missing
-                                        if "SAP" in clean_line and "🚀" not in clean_line:
-                                             clean_line = f"🚀 {clean_line}"
-                                except:
-                                    # Fallback: Try Regex if ast fails
-                                    try:
-                                        msg_match = re.search(r"'message':\s*['\"](.*?)['\"],\s*'date'", clean_line)
-                                        if msg_match:
-                                            clean_line = msg_match.group(1)
-                                            parsed_successfully = True
-                                    except:
-                                        pass
-
-                                # If we failed to parse but it looks like a raw log, FORCE ignore it
-                                if not parsed_successfully and "{'message':" in clean_line:
-                                    continue
-
-                            # Filter out technical/debug logs
-                            forbidden_markers = [
-                                "Emitiendo evento", 
-                                "{'message':", 
-                                "{'date':", 
-                                "Debug", "DEBUG", "debug",
-                                "Socket Manager",
-                                "Error de conexión",
-                                "No se puede emitir evento",
-                                "🌐 [CONSOLE]",
-                                "HTTPConnectionPool",
-                                "NewConnectionError",
-                                "Max retries exceeded"
-                            ]
-
-                            if any(bad in clean_line for bad in forbidden_markers):
-                                continue
-
-                            # Whitelist: Only allow logs with specific icons as requested
-                            allowed_markers = ["✅", "⬇️", "⚠️", "⚠", "❌", "📂", "🔍", "📄", "🚀", "🤖"]
-                            
-                            # Auto-add icons for specific start/end phrases if missing
-                            if "Iniciando automatización" in clean_line or "Iniciando proceso" in clean_line:
-                                if not any(x in clean_line for x in ["🚀", "🤖"]):
-                                    clean_line = f"🚀 {clean_line}"
-                            if "Finalizando automatización" in clean_line:
-                                if not any(x in clean_line for x in ["✅", "🛑"]):
-                                    clean_line = f"✅ {clean_line}"
-
-                            if not any(ok in clean_line for ok in allowed_markers):
-                               continue
-
-                            # Add checkmark if it was green (for frontend styling)
-                            if is_green and "✅" not in clean_line:
-                                clean_line = f"✅ {clean_line}"
-
-                            print(f"{clean_line}")
-                            
-                            # Save to Database if execution_id is present
-                            if exec_id:
-                                try:
-                                    db = SessionLocal()
-                                    try:
-                                        new_log = DSeguimiento(
-                                            iMEjecucion=exec_id,
-                                            tDescripcion=clean_line[:250], # Limit to 250 chars as per schema
-                                            fRegistro=datetime.now()
-                                        )
-                                        db.add(new_log)
-                                        db.commit()
-                                    except Exception as db_err:
-                                        print(f"⚠️ Error saving log to DB: {db_err}")
-                                    finally:
-                                        db.close()
-                                except Exception as e:
-                                    print(f"⚠️ Error creating DB session for logging: {e}")
-
-                            asyncio.run_coroutine_threadsafe(
-                                sio.emit('log:bot', {
-                                    'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                    'message': clean_line
-                                }),
-                                event_loop
-                            )
-            except Exception as e:
-                print(f"Error streaming logs: {e}")
-            finally:
-                print("🔴 Fin de captura de logs del bot")
-                proc.stdout.close()
-
-        t = threading.Thread(target=stream_output, args=(process, loop, config.execution_id))
-        t.daemon = True
-        t.start()
+        print(f"✅ Trabajo enviado al Watcher: {job_file_path}")
         
-        return {"message": "Bot iniciado correctamente", "pid": process.pid}
+        # Simulamos la salida que espera el frontend
+        log_lines = [
+            f"🚀 Trabajo encolado exitosamente.",
+            f"📂 Carpeta de salida: {folder_path}",
+            f"📄 ID de Trabajo: {job_id}",
+            f"⏳ El servicio DMZ procesará la solicitud en breve."
+        ]
+        
+        return {
+             "success": True, 
+             "message": "Solicitud enviada al servicio de automatización",
+             "job_id": job_id,
+             "logs": log_lines
+        }
+
+        # --- FIN NUEVA LÓGICA ---
         
     except Exception as e:
         print(f"Error ejecutando bot: {e}")

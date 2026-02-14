@@ -1,58 +1,87 @@
-# Comandos de Ejecución del Proyecto
+# Comandos de Ejecución del Proyecto (Arquitectura DMZ)
 
-## Backend (FastAPI)
+## 1. Backend (FastAPI)
 Directorio: `backend/`
 
-1. Crear entorno virtual (opcional pero recomendado):
-   python -m venv venv
-   .\.venv\Scripts\activate
+1. Crear entorno virtual (opcional):
+   cd backend
+   python -m venv .venv
 
-2. Instalar dependencias:
+2. Activar entorno e instalar dependencias:
+   .\.venv\Scripts\activate
    pip install -r requirements.txt
 
 3. Ejecutar servidor de desarrollo:
-   uvicorn app.main:app --reload --port 8001
+   .\run_server.ps1
+   # O manualmente con uvicorn:
+   # uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 
-   El servidor estará disponible en: http://localhost:8001
-   Documentación API (Swagger): http://localhost:8001/docs
+   URL: http://localhost:8001
+   Swagger: http://localhost:8001/docs
 
-## Frontend (Angular)
+## 2. Servicios DMZ (Automatización y OCR)
+
+El sistema utiliza una arquitectura de servicios aislados. Ambos servicios deben estar ejecutándose para procesar las solicitudes.
+
+### A. SAP/SUNAT Service (Automatización Web)
+Directorio: `dmz/sunat-sap-service/`
+Responsabilidad: Automatización de descargas en portales web usando Playwright.
+
+1. Crear entorno virtual (IMPORTANTE para aislar dependencias):
+   cd dmz/sunat-sap-service
+   python -m venv .venv
+
+2. Activar entorno e instalar dependencias:
+   .\.venv\Scripts\activate
+   pip install .
+   playwright install chromium
+
+3. Ejecutar servicio (Modo Watcher):
+   python run_watcher.py
+   # Nota: El script 'run_watcher.py' inicia el monitoreo de la carpeta dmz/exchange.
+
+### B. Gemini Service (OCR - Inteligencia Artificial)
+Directorio: `dmz/gemini-service/`
+Responsabilidad: Procesamiento de archivos PDF con Google Gemini.
+
+1. Crear entorno virtual:
+   cd dmz/gemini-service
+   python -m venv .venv
+
+2. Activar entorno e instalar dependencias:
+   .\.venv\Scripts\activate
+   pip install -r requirements.txt
+
+3. Ejecutar servicio (Modo Watcher):
+   python run_watcher.py
+
+## 3. Frontend (Angular)
 Directorio: `frontend/`
 
 1. Instalar dependencias:
+   cd frontend
    npm install
 
 2. Ejecutar servidor de desarrollo:
    npm start
    # O alternativamente:
-   ng serve
+   # ng serve
 
-   La aplicación estará disponible en: http://localhost:4200
-
-## Servicio SAP/SUNAT (Python Automation)
-Directorio: `sunat-sap-service/`
-
-1. Crear entorno virtual (opcional pero recomendado):
-   python -m venv .venv
-   .\.venv\Scripts\activate
-
-2. Instalar dependencias:
-   pip install .
-   playwright install
-
-3. Ejecutar servicio:
-   python app.py
+   URL: http://localhost:4200
 
 ## Credenciales (Desarrollo)
 Usuario: admin
 Contraseña: admin123
 
+## Flujo de Trabajo
+1. El usuario inicia una acción en el Frontend.
+2. El Frontend llama al Backend.
+3. El Backend escribe un archivo JSON en `dmz/exchange/pendientes` (o `ocr/pendientes`).
+4. El servicio DMZ correspondiente (Gemini o SAP) detecta el archivo, lo procesa y reporta el resultado vía Socket.IO o archivo de salida.
 
-# Servidor Linux 
-1. Busqueda de archivo de configuración Nginx:
-sudo nano /etc/nginx/sites-available/cosapi
-
-2. Configuración del servicio cosapi.backend:
-sudo nano /etc/systemd/system/cosapi-backend.service
-sudo systemctl daemon-reload
-sudo systemctl restart cosapi-backend
+## Notas para Despliegue Linux
+- Configurar servicios systemd para cada componente:
+  - `cosapi-backend.service`
+  - `cosapi-gemini.service` (Ejecutando run_watcher.py)
+  - `cosapi-sap.service` (Ejecutando run_watcher.py)
+- Nginx debe actuar como proxy inverso para el puerto 8001 (Backend).

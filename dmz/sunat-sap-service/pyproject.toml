@@ -10,4 +10,5 @@ dependencies = [
     "aiohttp>=3.13.3", 
     "python-socketio[asyncio-server,client]>=5.16.0",
     "openpyxl",
+    "pandas",
 ]
